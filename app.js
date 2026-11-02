@@ -403,14 +403,14 @@
       `<div class="badges">${o.l.map((n) => `<span class="badge ${n}">${NIV_LABEL[n]}</span>`).join("")}<span class="badge gebied">${esc(f.naam)}</span></div>` +
       `<h2 id="dTitel">${esc(o.n)}</h2>${naamRegels(o.n, o.e, "Internationale naam")}` +
       (extra ? `<div class="attentie${extra.zeker ? "" : " zacht"}"><p><strong>${extra.zeker ? "Let op: extra toelatingseisen" : "Misschien extra toelatingseisen"}</strong></p><p>${esc(extra.tekst)} ${extra.zeker ? "" : "Check of dat voor deze opleiding geldt. "}De precieze eisen en data staan op de website van de opleiding. <a href="#toelating">Hoe werkt selectie?</a></p></div>` : "") +
-      (bekender ? `<p class="praat">Zoek je <button type="button" class="linkbtn" data-oplnaam="${esc(bekender.n)}">${esc(bekender.n)}</button>? Die opleiding bestaat ook los, bij ${bekender.i.length} ${bekender.i.length === 1 ? "school" : "scholen"}.</p>` : "") +
+      (bekender ? `<p class="praat">Zoek je <a href="#/opleidingen" data-oplnaam="${esc(bekender.n)}">${esc(bekender.n)}</a>? Die opleiding bestaat ook los, bij ${bekender.i.length} ${bekender.i.length === 1 ? "school" : "scholen"}.</p>` : "") +
       `<p><button type="button" class="btn ${isFav(o.n) ? "" : "ghost"} favknop" data-fav="${esc(o.n)}">${isFav(o.n) ? "✓ Op mijn lijst" : "+ Zet op mijn lijst"}</button> <a class="deel-link" href="opleidingen/${oplSlug.get(o.n)}/" target="_blank" rel="noopener">Vaste pagina om te delen ↗</a></p>` +
       
       (Z
         ? `<h3>Wat doe je?</h3><p>${vt(o.uitleg)}</p><p>Dit is een opleiding van een ziekenhuis, niet van een hogeschool. Je bent er in dienst, werkt vanaf het begin mee en krijgt les op hbo-niveau. Je haalt een erkend diploma (CZO), geen bachelor.</p>` +
           `<h3>Wat kun je ermee?</h3><ul class="beroepen">${o.kunJe.map(beroepLi).join("")}</ul>` +
           `<h3>Wat heb je ervoor nodig?</h3><ul><li><strong>Vooropleiding:</strong> ${esc(o.eisen)}</li><li>Het helpt als je ${alsJe(o.eigen)}.</li></ul><p class="praat" style="margin-top:8px">Eisen en startmomenten verschillen per ziekenhuis. Kijk bij de vacature zelf.</p>`
-        : `<h3>In welke groep valt dit?</h3><p>${esc(o.n)} hoort bij de groep <strong>${esc(f.naam)}</strong>. ${vt(f.uitleg)}</p><p>Wat je precies leert, verschilt per school. Lees het programma op de website van de opleiding, of <button type="button" class="linkbtn" data-famopen="${f.id}">vergelijk met de andere opleidingen in deze groep</button>.</p>`) +
+        : `<h3>In welke groep valt dit?</h3><p>${esc(o.n)} hoort bij de groep <strong>${esc(f.naam)}</strong>. ${vt(f.uitleg)}</p><p>Wat je precies leert, verschilt per school: lees het programma op de website van de opleiding. <a class="beroepknop" href="#/opleidingen" data-famopen="${f.id}">Andere opleidingen in deze groep</a></p>`) +
       (X && !Z ? `<h3>Wat kun je ermee?</h3><ul class="beroepen">${(M ? M.kunJe : X.kunJe).map(beroepLi).join("")}</ul>` : "") +
       (X && !Z
         ? `<h3>Wat heb je ervoor nodig?</h3><ul><li><strong>Vooropleiding:</strong> ${o.l.map((n) => `voor ${NIV_LABEL[n]}: ${VOOROPLEIDING[n] || ""}`).join("; ")}.</li>` +
@@ -1214,7 +1214,7 @@
     `<div class="kaartleg"><span>Jouw route (na de test)</span><span>Paadje naar een faculteit: via mbo, hbo of wo</span><span>Klik op een faculteit</span></div>`;
   document.addEventListener("click", (e) => {
     const fo = e.target.closest("[data-famopen]");
-    if (fo) { $("#detail").close(); openFamily(fo.dataset.famopen); return; }
+    if (fo) { e.preventDefault(); $("#detail").close(); openFamily(fo.dataset.famopen); return; }
     const be = e.target.closest("[data-beroep]");
     if (be) {
       e.preventDefault();
@@ -1337,6 +1337,7 @@
   document.addEventListener("click", (e) => {
     const b = e.target.closest && e.target.closest("[data-oplnaam]");
     if (!b) return;
+    e.preventDefault();
     const x = OPLEIDINGEN.find((y) => y.n === b.dataset.oplnaam);
     if (x) openOpleiding(x, FAMILIES.find((ff) => ff.id === x.f));
   });
