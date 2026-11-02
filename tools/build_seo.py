@@ -43,6 +43,7 @@ FOTO = {
     "bouw": ("Studenten bouwkunde maken een maquette van karton", "center 25%"),
     "design": ("Designstudenten hangen schetsen op een moodboard in de studio", "center 25%"),
     "muziek": ("Conservatoriumstudenten repeteren met gitaar, zang en piano", "center 45%"),
+    "uiterlijk": ("Kappersstudenten knippen en föhnen bij elkaar in een oefensalon terwijl de docent meekijkt", "center 35%"),
 }
 
 
