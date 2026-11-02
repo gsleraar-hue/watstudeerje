@@ -238,7 +238,7 @@ const STUDIES = [
     kort: "Je bedenkt en bouwt interactieve dingen, zoals een slimme installatie, game of app.",
     doe: "Een mix van programmeren, elektronica en ontwerp. Je werkt in projecten en bouwt prototypes.",
     kanJe: ["Interactieontwerper", "Game developer", "Productontwikkelaar", "Innovatiemanager"],
-    let: "Wat je kunt, is breed. Je wordt in niets de beste, maar je kunt veel aan elkaar knopen.",
+    let: "Je leert breed en niet heel diep in één vak. Je kracht is dat je verschillende vakgebieden aan elkaar knoopt.",
     praat: "Zou je liever zelf bouwen of bedenken wat er gebouwd moet worden?" },
   { id: "ido", naam: "Industrieel productontwerpen", engels: "Industrial Design Engineering", niveau: ["hbo", "wo"], gebied: "tech",
     kort: "Je ontwerpt fysieke producten, van koptelefoon tot medisch apparaat, en zorgt dat ze werken én mooi zijn.",
@@ -270,7 +270,7 @@ const STUDIES = [
     kort: "Je combineert creativiteit met ondernemen: hoe maak je van een idee een bedrijf of project?",
     doe: "Ondernemen, marketing, productontwikkeling en projecten voor echte klanten of je eigen onderneming.",
     kanJe: ["Ondernemer", "Productmanager", "Creatief producent", "Marketeer"],
-    let: "Vooral de zakelijke kant kost veel tijd.",
+    let: "Een groot deel van de opleiding gaat over de zakelijke kant: geld, plannen en klanten. Niet alleen over maken.",
     praat: "Welk idee van jezelf zou je willen uitproberen?" },
 
   // MENS
@@ -284,7 +284,7 @@ const STUDIES = [
     kort: "Je helpt mensen met problemen op het gebied van geld, wonen, opvoeding of werk een plan te maken.",
     doe: "Gesprekken voeren, vertrouwen opbouwen, samenwerken met instanties en veel stage.",
     kanJe: ["Maatschappelijk werker", "Jongerenwerker", "Wijkcoach", "Jeugdzorgwerker"],
-    let: "Het kan zwaar zijn. Je ziet verdriet en situaties waar je niet alles kunt oplossen.",
+    let: "Je krijgt te maken met verdriet en met situaties die je niet allemaal kunt oplossen.",
     praat: "Hoe ga je ermee om als je iemand niet kunt helpen?" },
   { id: "recht", naam: "Rechten", engels: "Law / International Law", niveau: ["hbo", "wo"], gebied: "mens",
     kort: "Je leert hoe regels werken, hoe je geschillen oplost en hoe je een standpunt onderbouwt.",
@@ -296,7 +296,7 @@ const STUDIES = [
     kort: "Je leert kinderen van 4 tot 12 jaar lezen, rekenen en samenleven.",
     doe: "Didactiek, pedagogiek, vakken voor de basisschool en veel stage in de klas.",
     kanJe: ["Leraar basisschool", "Intern begeleider", "Schoolleider (later)", "Onderwijsadviseur"],
-    let: "Er is een tekort aan leraren, dus werk is goed te vinden. De werkdruk is wel hoog.",
+    let: "Er is een tekort aan leraren, dus werk is goed te vinden. Hoe druk het werk voelt, verschilt per school: vraag het leraren op je stage.",
     praat: "Welke leraar heeft indruk op jou gemaakt, en waarom?" },
 
   // WETEN
@@ -310,7 +310,7 @@ const STUDIES = [
     kort: "Een brede universitaire opleiding waarin je zelf een pakket vakken samenstelt, van natuur tot maatschappij.",
     doe: "Kleinschalig, intensief en vaak op een campus. Je kiest zelf vakken en werkt veel samen met docenten.",
     kanJe: ["Doorstromen naar een master", "Onderzoeker", "Beleidsadviseur", "Consultant"],
-    let: "Je moet goed zelf kunnen plannen en kiezen. De opleiding is vaak duur en selectief.",
+    let: "Je moet goed zelf kunnen plannen en kiezen. Er is selectie en het collegegeld is vaak hoger dan bij een gewone bachelor.",
     praat: "Weet je al waar je interesse ligt, of wil je eerst breed kijken?" },
   { id: "biologie", naam: "Biologie & duurzaamheid", engels: "Biology / Future Planet Studies", niveau: ["hbo", "wo"], gebied: "weten",
     kort: "Je onderzoekt natuur, klimaat en leefomgeving, en bedenkt hoe we ermee omgaan.",

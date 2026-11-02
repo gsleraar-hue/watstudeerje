@@ -53,6 +53,9 @@
     return h;
   }
 
+  // Persona's horen bij een brede richting, niet bij één opleiding: zeg dat er dus bij
+  const personaKop = (k) => `<h3>Wie kiezen voor ${esc((GEBIEDEN[k] || {}).naam || "deze richting")}? <small>(verzonnen voorbeelden uit deze richting, niet per se van deze opleiding)</small></h3>`;
+
   function personaHtml(k) {
     return `<div class="personas">${(PERSONAS[k] || []).map((p) => `<div class="persona"><strong>${esc(p.naam)}</strong><span>${esc(p.studie)}</span><p>${vt(p.tekst)}</p></div>`).join("")}</div>`;
   }
@@ -321,7 +324,7 @@
         ? `<h3>Wat doe je?</h3><p>${vt(o.uitleg)}</p><p>Dit is een opleiding van een ziekenhuis, niet van een hogeschool. Je bent er in dienst, werkt vanaf het begin mee en krijgt les op hbo-niveau. Je haalt een erkend diploma (CZO), geen bachelor.</p>` +
           `<h3>Wat kun je ermee?</h3><ul>${o.kunJe.map((k) => `<li>${vt(k)}</li>`).join("")}</ul>` +
           `<h3>Wat heb je ervoor nodig?</h3><ul><li><strong>Vooropleiding:</strong> ${esc(o.eisen)}</li><li><strong>Het helpt als je:</strong> ${o.eigen.map(vt).join(", ")}</li></ul><p class="praat" style="margin-top:8px">Eisen en startmomenten verschillen per ziekenhuis. Kijk bij de vacature zelf.</p>`
-        : `<h3>Wat betekent dit?</h3><p>${vt(f.uitleg)} Soortgelijke opleidingen vind je in dezelfde groep.</p>`) +
+        : `<h3>In welke groep valt dit?</h3><p>${esc(o.n)} hoort bij de groep <strong>${esc(f.naam)}</strong>. ${vt(f.uitleg)}</p><p>Wat je precies leert, verschilt per school. Lees het programma op de website van de opleiding, of <button type="button" class="linkbtn" data-famopen="${f.id}">vergelijk met de andere opleidingen in deze groep</button>.</p>`) +
       (X && !Z ? `<h3>Wat kun je ermee?</h3><ul>${X.kunJe.map((k) => `<li>${vt(k)}</li>`).join("")}</ul>` : "") +
       (X && !Z
         ? `<h3>Wat heb je ervoor nodig?</h3><ul><li><strong>Vooropleiding:</strong> ${o.l.map((n) => `voor ${NIV_LABEL[n]}: ${VOOROPLEIDING[n] || ""}`).join(". ")}</li><li>${vt(X.profiel)}</li><li><strong>Het helpt als je:</strong> ${X.eigen.map(vt).join(", ")}</li></ul><p class="praat" style="margin-top:8px">Toelatingseisen verschillen per school. Lees ze altijd bij de opleiding zelf.</p>`
@@ -339,7 +342,7 @@
       `<li>Volgend jaar opnieuw proberen.</li></ul><p><a href="#planb">Lees alles over Plan B →</a></p></div>`) +
       (Z ? `<h3>Hoe kom je daar?</h3><ol class="stapjes"><li>Haal je havo-, vwo- of mbo 4-diploma.</li><li>Loop een dagje mee op de OK van een ziekenhuis.</li><li>Zoek vacatures voor "${esc(o.n.toLowerCase())} in opleiding" op de werkenbij-sites van ziekenhuizen. Ze openen vaak een paar keer per jaar.</li><li>Solliciteer met een brief en je cv.</li><li>Aangenomen? Dan teken je een leerwerkovereenkomst en krijg je meteen salaris. Je meldt je niet aan via Studielink.</li></ol>` : "") +
       (Z ? "" : `<h3>Hoe kom je daar?</h3><ol class="stapjes"><li>Zorg voor de juiste vooropleiding en het juiste profiel.</li><li>Ga naar een open dag of meeloopdag.</li><li>Meld je aan via Studielink: uiterlijk 1 mei${SELECTIE[f.id] ? ", bij selectie of loting vaak al vóór 15 januari" : ""}.</li><li>Doe de studiekeuzecheck.</li><li>Regel je geld bij DUO, en eventueel een kamer.</li></ol><p><a href="#route">Bekijk het hele stappenplan →</a></p>`) +
-      `<h3>Wie zitten hier? <small>(verzonnen voorbeelden)</small></h3>${personaHtml(f.gebied)}` +
+      personaKop(f.gebied) + personaHtml(f.gebied) +
       `<h3>Hoe lang?</h3><p>${Z ? esc(o.duur) : o.l.map((n) => `${NIV_LABEL[n]}${n === "mbo" && o.mn && o.mn.length ? " niveau " + o.mn.join(", ") : ""}: ${EC_JAAR[n]}`).join(" · ")}</p>` +
       ((o.v || []).length ? `<h3>Hoe kun je hem volgen?</h3><p>${o.v.map((v) => VORM_LANG[v] || v).join(", ")}.${o.v.some((v) => v === "bol" || v === "bbl") ? ` <a href="#leerwerk">Bol of bbl: wat past bij jou? →</a>` : o.v.some((v) => v === "deeltijd" || v === "duaal") ? ` <a href="#leerwerk">Werken en leren: hoe zit dat? →</a>` : ""}</p>` : "") +
       `<h3>Hoe studeer je?</h3><p>${o.v.map((v) => VORM[v] || v).join(", ") || "onbekend"}</p>` +
@@ -395,7 +398,7 @@
       `<h3>Wat heb je ervoor nodig?</h3><p>${vt(STUDIE_NODIG[s.id] || "")}</p>` +
       `<h3>Let op</h3><p>${vt(s.let)}</p>` +
       `<h3>Praat erover</h3><p class="praat">${vt(s.praat)}</p>` +
-      `<h3>Wie zitten hier? <small>(verzonnen voorbeelden)</small></h3>${personaHtml(s.gebied)}` +
+      personaKop(s.gebied) + personaHtml(s.gebied) +
       (STUDIE_FAM[s.id] ? `<p style="margin-top:18px"><button type="button" class="btn" data-famopen="${STUDIE_FAM[s.id]}">Bekijk waar je dit kunt studeren</button></p>` : "");
     const d = $("#detail");
     if (d.showModal) d.showModal();
