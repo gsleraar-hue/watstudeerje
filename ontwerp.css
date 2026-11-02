@@ -1094,6 +1094,7 @@ ul.banen li{display:flex;justify-content:space-between;gap:10px;align-items:base
 .pf-check li{display:flex;gap:10px;align-items:flex-start}
 .pf-ok,.pf-nee,.pf-info{flex:none;display:inline-grid;place-items:center;width:1.35em;height:1.35em;border-radius:50%;font-weight:800;font-size:.85rem;line-height:1;color:#fff}
 .pf-ok{background:var(--green)}
+.badge.particulier{border-color:#b45309;color:#b45309;text-transform:none;letter-spacing:0;font-size:.72rem;padding:1px 8px;vertical-align:2px}
 .pf-info.pf-extra{background:#b45309;margin-left:4px;font-style:normal;font-family:inherit}
 .attentie{border:1px solid #b45309;border-left-width:5px;border-radius:var(--r);padding:10px 14px;margin:10px 0 14px;background:rgba(180,83,9,.07)}
 .attentie p{margin:0 0 4px}.attentie p:last-child{margin:0}

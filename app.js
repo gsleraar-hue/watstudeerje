@@ -74,13 +74,16 @@
     if (e) return { zeker: true, tekst: e[1] };
     if (famId === "muziek") return { zeker: true, tekst: "Bijna altijd een auditie." };
     if (famId === "design" && !o.l.every((n) => n === "mbo")) return { zeker: true, tekst: "Vaak een portfolio of toelatingsopdracht." };
-    if (SELECTIE[famId]) return { zeker: false, tekst: `In deze groep hebben sommige opleidingen extra eisen: ${SELECTIE[famId].charAt(0).toLowerCase() + SELECTIE[famId].slice(1)}` };
     return null;
   }
   // "Het helpt als je ..." loopt door als zin: a, b en c
   const alsJe = (l) => { const x = l.map(vt); return x.length > 1 ? x.slice(0, -1).join(", ") + " en " + x[x.length - 1] : x.join(""); };
   // Niet door de overheid bekostigd: hoger collegegeld
-  const PARTICULIER = new Set(["LOI", "NTI", "Hogeschool NCOI", "Tio", "Wittenborg University of Applied Sciences B.V.", "Nyenrode Business Universiteit", "TMO Fashion Business School BV", "Schoevers", "EuroCollege Hogeschool", "Haarlem Institute for Higher Education B.V.", "The New School for Information Services", "Pro Education B.V.", "International University of Applied Sciences  Amsterdam"]);
+  const PARTICULIER = new Set(["LOI", "NTI", "Hogeschool NCOI", "Tio", "Wittenborg University of Applied Sciences B.V.", "Nyenrode Business Universiteit", "TMO Fashion Business School BV", "Schoevers", "EuroCollege Hogeschool", "Haarlem Institute for Higher Education B.V.", "The New School for Information Services", "Pro Education B.V.", "International University of Applied Sciences  Amsterdam",
+    "Capabel Onderwijs", "Herman Brood Academie", "EuroCollege School of Management", "NIPA Opleidingen", "NCVB Bedrijfsopleidingen", "PROFIT Opleidingen", "Instituut Broers", "Opleidingsinstituut Penso", "Orgb opleidingen",
+    "Motivation Beveiligingsopleidingen", "Motivation Beveiligingsopleidingen en Adviezen", "I AM College", "NL Mode Academie", "Nederlandse Academie voor Beeldcreatie", "KOS Kappersopleidingen", "Hair Kappersopleiding",
+    "Kappersacademie Roermond", "Kappers College Limburg", "Stichting Nederlandse Kappersakademie", "Maas College BV", "Laurentius College", "Medivus Opleidingen BV", "Maatwerk Zorgtrainingen BV", "OPPstap Zorg & Welzijn B.V.",
+    "Zorg & Werk Academy B.V.", "SoSecure Academy BV", "Instituut voor Beveiligingsopleidingen B.V.", "Opleidingsinstituut voor Politie en Beveiligingspersoneel B.V.", "G&D BV", "GOmotive BV", "OBM Oost B.V.", "SF-S B.V.", "In Service voor ZorgOnderwijs B.V."]);
 
   /* ---------- Waar woon je? Afstand en reistijd ---------- */
   const WP = WOONPLAATSEN.map((w) => ({ naam: w[0], prov: w[1], lat: w[2], lon: w[3] }));
@@ -134,7 +137,7 @@
   }
 
   /* ---------- Gids ---------- */
-  const state = { zoek: "", niveau: "", gebied: "", vorm: "", autoUit: false };
+  const state = { zoek: "", niveau: "", gebied: "", vorm: "", fam: "", autoUit: false };
   const NIVEAUS = ["mbo", "hbo", "wo"];
 
   function chip(container, label, key, value) {
@@ -283,6 +286,7 @@
     const perFam = FAMILIES.map((f) => {
       const items = OPLEIDINGEN.filter((o) => {
         if (o.f !== f.id) return false;
+        if (state.fam && f.id !== state.fam) return false;
         if (state.niveau && !o.l.includes(state.niveau)) return false;
         if (auto.length && !o.l.some((n) => auto.includes(n))) return false;
         if (state.gebied && f.gebied !== state.gebied) return false;
@@ -335,6 +339,7 @@
       b.addEventListener("click", () => { reset(); renderChips(); renderList(); });
       act.appendChild(b);
     };
+    if (state.fam) addChip("Alleen: " + ((FAMILIES.find((f) => f.id === state.fam) || {}).naam || state.fam) + " (toon alles)", () => (state.fam = ""));
     if (state.gebied) addChip("Faculteit: " + GEBIEDEN[state.gebied].naam, () => (state.gebied = ""));
     if (state.niveau) addChip("Niveau: " + NIV_LABEL[state.niveau], () => (state.niveau = ""));
     const soort = typeof schoolSoort === "function" ? schoolSoort() : "";
@@ -375,7 +380,8 @@
     const particulier = o.i.filter((i) => PARTICULIER.has(i));
     const extra = extraEis(o, f.id);
     const per = dichtsteBij(o.n);
-    const gesorteerd = thuis ? o.i.slice().sort((a, b) => ((per[a] || {}).d ?? 1e9) - ((per[b] || {}).d ?? 1e9)) : o.i;
+    const gesorteerd = (thuis ? o.i.slice().sort((a, b) => ((per[a] || {}).d ?? 1e9) - ((per[b] || {}).d ?? 1e9)) : o.i.slice())
+      .sort((a, b) => PARTICULIER.has(a) - PARTICULIER.has(b)); // particuliere scholen achteraan
     const insts = gesorteerd.slice(0, 40);
     let reis = `<div class="reis">${woonInput("woonDialog")}`;
     if (!thuis) {
@@ -387,7 +393,7 @@
       else if (o.is && best > 40) reis += `<p><strong>Dit zijn niet alle ziekenhuizen die opleiden.</strong> Het dichtstbijzijnde hier is ${afstandTekst(best)}, maar de kans is groot dat een ziekenhuis bij jou in de buurt ook opleidt. Kijk op de werkenbij-site van dat ziekenhuis.</p>`;
       else if (best < 25) reis += `<p><strong>Thuis blijven wonen kan prima.</strong> De dichtstbijzijnde school is ${afstandTekst(best)}.</p>`;
       else if (best <= 60) reis += `<p><strong>Reizen kan.</strong> De dichtstbijzijnde school is ${afstandTekst(best)} (enkele reis, indicatie). Veel studenten reizen zo'n afstand dagelijks.</p>`;
-      else reis += `<p><strong>Dat is ver weg:</strong> de dichtstbijzijnde school is ${afstandTekst(best)}. De meeste studenten gaan dan op kamers. Begin op tijd met zoeken, want in studentensteden is een kamer vinden niet altijd makkelijk.</p>`;
+      else reis += `<p><strong>Dat is ver weg:</strong> de dichtstbijzijnde school is ${afstandTekst(best)}. Elke dag reizen of op kamers gaan? Dat is een persoonlijke afweging: reistijd, geld, hoe zelfstandig je al bent en wat thuis kan. Bespreek het eerst met je ouders of verzorgers. Kies je voor een kamer, begin dan op tijd met zoeken.</p>`;
       if (best !== null && best > 40 && !o.is) {
         const alt = OPLEIDINGEN.filter((x) => x.f === o.f && x.n !== o.n).map((x) => {
           let m = 1e9;
@@ -438,7 +444,7 @@
       `<h3>Hoe studeer je?</h3><p>${o.v.map((v) => VORM[v] || v).join(", ") || "onbekend"}</p>` +
       `<h3>Waar kan het? (${o.i.length} ${Z ? "ziekenhuizen" : o.i.length === 1 ? "school" : "scholen"})</h3>${reis}<ul class="scholen">${insts.map((i) => schoolRegel(i, o.n, per[i])).join("")}</ul>` +
       (Z ? `<p>Veel meer ziekenhuizen leiden op. Kijk ook bij het ziekenhuis bij jou in de buurt.</p>` : "") +
-      (particulier.length ? `<p class="praat"><strong>Let op:</strong> ${particulier.map(esc).join(", ")} ${particulier.length === 1 ? "is een particuliere school" : "zijn particuliere scholen"}: zonder geld van de overheid. Je betaalt daar een veel hoger collegegeld dan het wettelijke.</p>` : "") +
+      (particulier.length ? `<div class="attentie"><p><strong>Let op: ${particulier.length === 1 ? "particuliere school" : "particuliere scholen"}</strong></p><p>${particulier.map(esc).join(", ")} ${particulier.length === 1 ? "krijgt" : "krijgen"} geen geld van de overheid. Je betaalt daar een veel hoger ${M ? "lesgeld" : "collegegeld"}, vaak vele malen het gewone bedrag. Particuliere opleidingen zijn meestal bedoeld voor volwassenen die naast hun werk leren. Kom je van de middelbare school, kijk dan eerst bij de andere scholen.</p></div>` : "") +
       (o.i.length > insts.length ? `<p style="color:var(--muted)">en ${o.i.length - insts.length} andere</p>` : "") +
       `<p class="praat" style="margin-top:16px">Namen kunnen misleiden. Vergelijk altijd het programma van twee scholen en lees de toelatingseisen op de website van de opleiding zelf.</p>`;
     const d = $("#detail");
@@ -452,6 +458,7 @@
     state.niveau = "";
     state.gebied = "";
     state.vorm = "";
+    state.fam = id;
     renderChips();
     renderList();
     const d = document.getElementById("fam-" + id);
@@ -1218,8 +1225,12 @@
     const be = e.target.closest("[data-beroep]");
     if (be) {
       e.preventDefault();
+      const v = zoekVarianten(be.dataset.beroep);
+      famVan = famVan || new Map(FAMILIES.map((f) => [f.id, f]));
+      const raak = OPLEIDINGEN.filter((o) => famVan.get(o.f) && zoekScore(o, famVan.get(o.f), v) >= 60);
+      if (new Set(raak.map((o) => o.n)).size === 1) { openOpleiding(raak[0], famVan.get(raak[0].f)); return; }
       $("#detail").close();
-      Object.assign(state, { zoek: be.dataset.beroep, niveau: "", gebied: "", vorm: "" });
+      Object.assign(state, { zoek: be.dataset.beroep, niveau: "", gebied: "", vorm: "", fam: "" });
       $("#zoek").value = be.dataset.beroep;
       renderChips();
       renderList();
@@ -1251,16 +1262,18 @@
     const e = OD[inst] || (typeof OD_MERK === "object" && OD[OD_MERK[inst]]);
     return e && Array.isArray(e.dagen) ? e.dagen.filter((d) => d.datum && (d.eind || d.datum) >= vandaag).sort((a, b) => a.datum.localeCompare(b.datum)) : [];
   }
+  const opleidingUrl = (opleiding, inst) => (opleiding ? veiligeUrl((typeof MBO_URL === "object" && MBO_URL[`${opleiding}|${inst}`]) || (typeof HO_URL === "object" && HO_URL[`${opleiding}|${inst}`])) : "");
   function schoolRegel(inst, opleiding, afst) {
     const k = komend(inst)[0];
     const odE = OD[inst] || (typeof OD_MERK === "object" && OD[OD_MERK[inst]]);
     const site = veiligeUrl(odE && odE.site);
-    const domein = (typeof DOMEINEN === "object" && DOMEINEN[inst]) || (site ? new URL(site).hostname.replace(/^www[.]/, "") : "");
-    const direct = opleiding && typeof MBO_URL === "object" && veiligeUrl(MBO_URL[`${opleiding}|${inst}`]);
-    const zoek = direct || "https://duckduckgo.com/?q=" + encodeURIComponent(opleiding ? `${opleiding} ${domein ? "site:" + domein : inst}` : inst);
-    let r = `<strong>${esc(inst)}</strong>`;
+    // Alleen echte pagina's van de school zelf: de opleidingspagina als die bekend is, anders de site van de school
+    const direct = opleidingUrl(opleiding, inst);
+    const schoolSite = !direct && site ? new URL(site).origin : "";
+    let r = `<strong>${esc(inst)}</strong>${PARTICULIER.has(inst) ? ` <span class="badge particulier">particulier · hoog lesgeld</span>` : ""}`;
     if (afst) r += ` <span class="afst">${afst.adres ? esc(afst.adres) + ", " : ""}${esc(afst.pl)} · ${afstandTekst(afst.d)}</span>`;
-    if (opleiding) r += ` <a href="${esc(zoek)}" target="_blank" rel="noopener">opleiding bekijken ↗</a> · <a href="${esc("https://duckduckgo.com/?q=" + encodeURIComponent(`meeloopdag ${opleiding} ${domein ? "site:" + domein : inst}`))}" target="_blank" rel="noopener">meeloopdag zoeken ↗</a>`;
+    if (direct) r += ` <a href="${esc(direct)}" target="_blank" rel="noopener">opleidingspagina ↗</a>`;
+    else if (opleiding && schoolSite) r += ` <a href="${esc(schoolSite)}" target="_blank" rel="noopener">website van de school ↗</a>`;
     if (k) r += `<br><span class="od-next">Eerstvolgende ${esc(k.soort || "open dag")}: ${fmt(k.datum, { weekday: "short", day: "numeric", month: "long" })}${k.plaats ? ", " + esc(k.plaats) : ""}</span>`;
     if (site) r += ` · <a href="${esc(site)}" target="_blank" rel="noopener">open dagen ↗</a>`;
     return `<li>${r}</li>`;
@@ -1409,7 +1422,7 @@
     st.push({ id: "lijst", wanneer: "Nu", titel: "Zet 2 of 3 opleidingen op je lijst", tekst: fav.length ? `Op je lijst: ${fav.map((o) => `<strong>${esc(o.n)}</strong>`).join(", ")}.` : `Open een opleiding en klik op “+ Zet op mijn lijst”. <a href="#/opleidingen">Naar de opleidingen →</a>`, klaar: fav.length >= 2 });
     st.push({ id: "profiel", wanneer: "Nu", titel: "Check of je de juiste vooropleiding en het juiste profiel hebt", tekst: fav.length && profielIngevuld() ? `<ul class="plan-od pf-lijst">${fav.map((o) => `<li>${profielTeken(o, o.f) || ""} <strong>${esc(o.n)}</strong></li>`).join("")}</ul>Open een opleiding voor de details. <a href="#/profiel">Mijn profiel →</a>` : fams.length ? fams.map((f) => `<strong>${esc((FAMILIES.find((x) => x.id === f) || {}).naam || f)}</strong>: ${vt(FAM_EXTRA[f].profiel)}`).join("<br>") : "Dit vul je aan zodra er opleidingen op je lijst staan. Twijfel je? Vraag het je decaan." });
     st.push({ id: "opendag", wanneer: "Najaar en voorjaar", titel: "Ga naar open dagen", tekst: od.length ? `<ul class="plan-od">${od.slice(0, 8).map((x) => `<li><strong>${fmt(x.dag.datum, { weekday: "short", day: "numeric", month: "long" })}</strong>: ${esc(x.inst)}${x.d ? ` (${esc(x.d.pl)}, ${Math.round(x.d.d)} km)` : ""}, voor ${esc(x.opl)}${x.site ? ` · <a href="${esc(veiligeUrl(x.site))}" target="_blank" rel="noopener">info ↗</a>` : ""}</li>`).join("")}</ul>Bereid je voor met de tips bij <a href="#/opendagen">Open dagen</a>.` : `Zet opleidingen op je lijst en vul je woonplaats in, dan zie je hier de open dagen dichtbij. Of bekijk alle <a href="#/opendagen">open dagen</a>.` });
-    st.push({ id: "meeloop", wanneer: "Vóór je je aanmeldt", titel: "Loop een dag mee", tekst: "Een open dag laat de mooie kant zien. Op een meeloopdag zit je een dag echt in de lessen en praat je met studenten. Doe het bij je top 2 of 3, liefst samen met iemand, zodat je achteraf kunt napraten. Vraag je mentor om vrij: dat mag bijna altijd." + (fav.length ? `<br>${fav.slice(0, 3).map((o) => `<a href="${esc("https://duckduckgo.com/?q=" + encodeURIComponent("meeloopdag " + o.n))}" target="_blank" rel="noopener">Meeloopdag ${esc(o.n)} ↗</a>`).join(" · ")}` : "") + ` <a href="#/opendagen">Zo regel je het →</a>` });
+    st.push({ id: "meeloop", wanneer: "Vóór je je aanmeldt", titel: "Loop een dag mee", tekst: "Een open dag laat de mooie kant zien. Op een meeloopdag zit je een dag echt in de lessen en praat je met studenten. Doe het bij je top 2 of 3, liefst samen met iemand, zodat je achteraf kunt napraten. Vraag je mentor om vrij: dat mag bijna altijd." + (fav.length ? `<br>Meeloopdagen staan meestal op de pagina van de opleiding zelf. Open een opleiding op je lijst en klik bij een school op <em>opleidingspagina</em>.` : "") + ` <a href="#/opendagen">Zo regel je het →</a>` });
     if (selectie.length && !mboRoute) st.push({ id: "fixus", wanneer: `Vóór 15 januari ${sj}`, titel: "Aanmelden voor opleidingen met selectie of loting", tekst: selectie.map((f) => `<strong>${esc(FAMILIES.find((x) => x.id === f).naam)}</strong>: ${esc(SELECTIE[f])}`).join("<br>") + "<br>Check bij de opleiding de precieze datum en wat je moet inleveren.", datum: new Date(sj, 0, 15) });
     st.push({ id: "digid", wanneer: "Ruim op tijd", titel: "Vraag een DigiD aan", tekst: mboRoute ? "Die heb je nodig voor DUO, bijvoorbeeld voor je studentenreisproduct. Aanvragen kost een paar dagen, want je krijgt een brief met een code." : "Die heb je nodig voor Studielink en DUO. Aanvragen kost een paar dagen, want je krijgt een brief met een code." });
     if (mboRoute) st.push({ id: "leerwerk", wanneer: "Vóór je je aanmeldt", titel: "Kies: vooral leren (bol) of vooral werken (bbl)?", tekst: "Veel mbo-opleidingen kun je op twee manieren volgen, met hetzelfde diploma. Bij bol ga je vooral naar school, bij bbl werk je bij een leerbedrijf en ga je één dag naar school. Kies je bbl? Zoek dan op tijd een leerbedrijf: dat doe je meestal zelf, bijvoorbeeld via <a href='https://leerbanenmarkt.nl' target='_blank' rel='noopener'>leerbanenmarkt.nl</a> of <a href='https://www.stagemarkt.nl' target='_blank' rel='noopener'>stagemarkt.nl</a>. <a href='#leerwerk'>Wat past bij jou? →</a>" });
@@ -1424,7 +1437,7 @@
     if (mboRoute) st.push({ id: "inschrijving", wanneer: `Voor de start ${sj}`, titel: "Inschrijving: de onderwijsovereenkomst", tekst: "Ben je toegelaten, dan teken je een onderwijsovereenkomst met de school (ben je jonger dan 18, dan tekent ook je ouder of verzorger). Bij bbl heb je ook een leerbaan nodig. Die zoek je meestal zelf, bijvoorbeeld via <a href='https://leerbanenmarkt.nl' target='_blank' rel='noopener'>leerbanenmarkt.nl</a>." });
     else st.push({ id: "inschrijving", wanneer: `Vóór 31 augustus ${sj}`, titel: "Inschrijving: maak het definitief", tekst: "Ben je toegelaten, dan schrijf je je definitief in via Studielink en regel je de betaling van het collegegeld (meestal met een machtiging). Pas dan sta je echt ingeschreven.", datum: new Date(sj, 7, 31) });
     if (verst !== null && verst > 60) {
-      st.push({ id: "wonen", wanneer: `Voorjaar en zomer ${sj}`, titel: "Kamer zoeken en regelen", tekst: `Een opleiding op je lijst is ongeveer ${Math.round(verst)} km van huis; dan gaan de meeste studenten op kamers.<ul class="plan-od">${KAMER_CHECKLIST.map((k) => `<li><strong>${esc(k[0])}:</strong> ${vt(k[1])}</li>`).join("")}</ul>Liever niet verhuizen? Kijk bij de opleiding naar <strong>alternatieven dichterbij</strong>.` });
+      st.push({ id: "wonen", wanneer: `Voorjaar en zomer ${sj}`, titel: "Reizen of op kamers?", tekst: `Een opleiding op je lijst is ongeveer ${Math.round(verst)} km van huis. Elke dag reizen of op kamers gaan is een persoonlijke afweging: reistijd, geld, hoe zelfstandig je al bent en wat thuis kan. Bespreek het eerst met je ouders of verzorgers. Kies je voor een kamer, dan helpt dit lijstje:<ul class="plan-od">${KAMER_CHECKLIST.map((k) => `<li><strong>${esc(k[0])}:</strong> ${vt(k[1])}</li>`).join("")}</ul>Liever niet verhuizen? Kijk bij de opleiding naar <strong>alternatieven dichterbij</strong>.` });
     } else {
       st.push({ id: "wonen", wanneer: `Zomer ${sj}`, titel: "Reizen met het ov", tekst: verst !== null ? `De opleidingen op je lijst zijn vanuit huis te doen (tot ± ${Math.round(verst)} km, ± ${reistijd(verst)} min). Vraag je studentenreisproduct aan bij DUO en maak de reis een keer op een gewone schooldag.` : "Vul je woonplaats in, dan kijkt de site of reizen met het ov of op kamers gaan het handigst is." });
     }
@@ -1562,7 +1575,7 @@
     $("#detailInhoud").innerHTML = `<div class="badges"><span class="badge gebied">Droombaan · knipoog</span></div><h2 id="dTitel">De nieuwe ${esc(d[0])}</h2><p class="eng">${esc(d[1])}</p>` +
       `<p class="praat">${vt(d[2])}</p>` +
       `<h3>Wat heb je ervoor nodig?</h3><p>${vt(d[3])}</p>` +
-      `<h3>Nog meer banen in dit vak</h3><ul class="banen">${d[4].map(([baan, niv]) => `<li><strong>${vt(baan)}</strong> <span class="badge">${esc(niv)}</span></li>`).join("")}</ul>` +
+      `<h3>Nog meer banen in dit vak</h3><ul class="banen">${d[4].map(([baan, niv]) => { const t = beroepZoekterm(baan); return `<li>${t ? `<a class="beroepknop" href="#/opleidingen" data-beroep="${esc(t)}"><strong>${vt(baan)}</strong></a>` : `<strong>${vt(baan)}</strong>`} <span class="badge">${esc(niv)}</span></li>`; }).join("")}</ul>` +
       `<h3>Opleidingen bekijken</h3><div class="mini">${d[5].map((f) => `<button type="button" data-famopen="${f}">${famNm(f)}</button>`).join("")}</div>`;
     $("#detail").showModal();
   });
@@ -1706,7 +1719,7 @@
     if (profiel.richting && s === "mbo") delen.push(esc((FAMILIES.find((f) => f.id === profiel.richting) || {}).naam || ""));
     let wat = "";
     if (s === "vmbo") wat = profiel.leerweg === "bb" ? "Met de basisberoepsgerichte leerweg kun je naar mbo niveau 2. Daarna kun je doorstromen naar niveau 3 en 4." : profiel.leerweg ? "Met deze leerweg kun je naar mbo niveau 3 of 4. Met gl of tl kun je ook naar de havo (vraag naar de eisen op je school)." : "Kies je leerweg, dan zie je naar welk mbo-niveau je kunt.";
-    if (s === "havo") wat = "Met havo kun je naar het hbo of naar mbo 4. Naar het wo kan na je hbo-propedeuse.";
+    if (s === "havo") wat = "Met havo kun je naar het hbo of naar mbo 4. Naar het wo kan na je hbo-propedeuse, of je stroomt eerst door naar vwo 5. Of dat kan, hangt af van je vakken en verschilt per school: maak daarvoor een afspraak met je decaan.";
     if (s === "vwo") wat = "Met vwo kun je naar het wo, het hbo of mbo 4.";
     if (s === "mbo") wat = "Met een mbo-4-diploma kun je naar het hbo. Soms vraagt een hbo-opleiding een bepaald vak of een bijspijkercursus.";
     const vk = profiel.vakken || [];
@@ -1717,7 +1730,7 @@
       const knop = (f) => `<button type="button" data-famopen="${f.id}">${esc(f.naam)}</button>`;
       const wel = streng.filter((f) => oordeel(f) === "goed");
       const niet = streng.filter((f) => oordeel(f) === "let");
-      passend = `<p>De meeste groepen vragen geen vast profiel. Bij deze groepen vraagt men wel een bepaald profiel of vak:</p>` +
+      passend = `<p>Voor de meeste opleidingen is elk profiel goed. Voor deze soorten opleidingen heb je wel een bepaald profiel of vak nodig:</p>` +
         (wel.length ? `<p><strong>Dat heb jij:</strong></p><div class="mini">${wel.map(knop).join("")}</div>` : "") +
         (niet.length ? `<p><strong>Daar mis je nog iets:</strong></p><div class="mini">${niet.map(knop).join("")}</div>` : "");
     }
@@ -2480,6 +2493,7 @@
   let zoekTimer = 0;
   $("#zoek").addEventListener("input", (e) => {
     state.zoek = e.target.value;
+    state.fam = "";
     renderList();
     if (state.zoek && view !== "opleidingen") go("opleidingen");
     clearTimeout(zoekTimer);
