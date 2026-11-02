@@ -14,7 +14,7 @@
 <meta property="og:url" content="https://watstudeerje.nl/">
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebSite","name":"Wat studeer je eigenlijk?","url":"https://watstudeerje.nl/","inLanguage":"nl","description":"Onafhankelijke hulp bij studiekeuze in gewone taal: ruim 1.100 mbo-, hbo- en wo-opleidingen uitgelegd, Engelse studienamen vertaald, een persoonlijk stappenplan en uitleg van begrippen als LOB, BSA en numerus fixus."}</script>
 <script>try{var t=localStorage.getItem("thema");if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
-<link rel="stylesheet" href="ontwerp.css?v=104">
+<link rel="stylesheet" href="ontwerp.css?v=105">
 </head>
 <body>
 
@@ -152,6 +152,10 @@
       <div class="m-veld"><svg id="metroSvg" class="metro-svg" viewBox="0 0 1080 500" role="img" aria-label="Metrokaart van vmbo, havo en vwo naar werk"></svg>
         <p class="m-legenda"><span><i class="lg-st"></i>station: een diploma of opleiding</span><span><i class="lg-ov"></i>doorstromen: verder naar een andere schoolsoort</span><span><i class="lg-later"></i>later nog leren</span></p></div>
       <aside id="metroInfo" class="st-info" aria-live="polite"><h3>Kies hierboven waar je nu zit</h3><p>Dan zie je jouw routes. Klik op een route, of op een station voor uitleg.</p></aside>
+    </div>
+    <div class="m-noten">
+      <div><h3>Op het mbo kies je direct je niveau</h3><p>De stations mbo 2, 3 en 4 liggen op één lijn, maar je hoeft ze niet allemaal te doen. Met de basisberoepsgerichte leerweg begin je op mbo 2. Met kader, gemengd of theoretisch kun je direct naar mbo 3 of 4. Met een havo- of vwo-diploma kun je ook naar mbo 4.</p></div>
+      <div><h3>Overstappen tijdens de middelbare school</h3><p>Ook vóór je diploma kun je wisselen. Gaat het goed, dan kun je soms een niveau omhoog: van het vmbo naar havo 4, of van de havo naar het vwo. Gaat het minder, dan kun je een niveau lager gaan. Elke school heeft eigen regels hiervoor: vraag je mentor of decaan.</p></div>
     </div>
   </section>
 
@@ -445,10 +449,11 @@
   <section id="alle">
     <h2>Alle opleidingen, gegroepeerd</h2>
     <p class="sub">Alle <span id="alleAantal">500+</span> erkende mbo-opleidingen, hbo- en wo-bachelors en associate degrees <span class="nlv">(tweejarige hbo-opleidingen)</span> in Nederland, gesorteerd op soortgelijke opleidingen. Zo zie je dat “Business Administration” <span class="nlv">(bedrijfskunde)</span>, “Bedrijfskunde” en “Management” <span class="nlv">(leidinggeven en organiseren)</span> vaak hetzelfde werkveld zijn. Het zoekveld bovenaan en de filters (mbo, hbo, wo) werken hier ook.</p>
-    <div class="filters" role="group" aria-label="Leervorm">
+    <div class="filters plakbalk" role="group" aria-label="Filters">
+      <div class="chips" id="alleNiveauChips" aria-label="Niveau"></div>
       <div class="chips" id="vormChips" aria-label="Hoe wil je leren?"></div>
+      <div id="actief" class="actief"></div>
     </div>
-    <div id="actief" class="actief"></div>
     <div id="families"></div>
     <p id="alleLeeg" class="empty" hidden>Niets gevonden in de volledige lijst.</p>
     <p class="source">Bron: <a href="https://onderwijsdata.duo.nl/datasets/overzicht-erkenningen-ho" target="_blank" rel="noopener">DUO, Overzicht Erkenningen ho (RIO)</a>, en <a href="https://onderwijsdata.duo.nl/datasets/rio_nfo_po_vo_vavo_mbo_ho" target="_blank" rel="noopener">DUO, RIO (aangeboden mbo-opleidingen)</a>, open data, licentie CC BY. Peildatum 31-10-2026.</p>
@@ -579,13 +584,13 @@
   </div>
 </footer>
 
-<script src="data.js?v=104"></script>
-<script src="opleidingen.js?v=104"></script>
-<script src="uitleg.js?v=104"></script>
-<script src="mbo.js?v=104"></script>
-<script src="zorg-inservice.js?v=104"></script>
-<script src="locaties.js?v=104"></script>
-<script src="opendagen.js?v=104"></script>
-<script src="app.js?v=104"></script>
+<script src="data.js?v=105"></script>
+<script src="opleidingen.js?v=105"></script>
+<script src="uitleg.js?v=105"></script>
+<script src="mbo.js?v=105"></script>
+<script src="zorg-inservice.js?v=105"></script>
+<script src="locaties.js?v=105"></script>
+<script src="opendagen.js?v=105"></script>
+<script src="app.js?v=105"></script>
 </body>
 </html>

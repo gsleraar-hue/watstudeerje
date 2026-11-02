@@ -39,7 +39,8 @@ const out = {
   families: FAMILIES.map((f) => {
     const X = FAM_EXTRA[f.id];
     return { id: f.id, naam: f.naam, gebied: f.gebied, uitleg: vt(f.uitleg), uitlegKaal: f.uitleg,
-      kunJe: X ? X.kunJe.map(vt) : [], profiel: X ? vt(X.profiel) : "", eigen: X ? X.eigen.map(vt) : [], selectie: SELECTIE[f.id] || "" };
+      kunJe: X ? X.kunJe.map(vt) : [], profiel: X ? vt(X.profiel) : "", eigen: X ? X.eigen.map(vt) : [], selectie: SELECTIE[f.id] || "",
+      kunJeMbo: MBO_EXTRA[f.id] ? MBO_EXTRA[f.id].kunJe.map(vt) : [], vmbo: MBO_EXTRA[f.id] ? MBO_EXTRA[f.id].vmbo : "" };
   }),
   vooropleiding: VOOROPLEIDING,
   opleidingen: OPLEIDINGEN.map((o) => ({ n: o.n, e: o.e || "", nl: termNl(o.n), f: o.f, l: o.l, i: o.i, p: o.p || [], v: o.v || [], mn: o.mn || [], is: o.is ? { uitleg: vt(o.uitleg), kunJe: o.kunJe.map(vt), eisen: o.eisen, eigen: o.eigen.map(vt), duur: o.duur } : null })),

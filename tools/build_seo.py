@@ -46,6 +46,11 @@ FOTO = {
 }
 
 
+def als_je(l):
+    """'Het helpt als je ...' loopt door als zin: a, b en c."""
+    return ", ".join(l[:-1]) + " en " + l[-1] if len(l) > 1 else "".join(l)
+
+
 def foto(fid, terug, klein=False):
     if fid not in FOTO:
         return ""
@@ -138,6 +143,7 @@ def main():
         if o["e"] and o["e"].lower().replace(" ", "") != o["n"].lower().replace(" ", ""):
             nl_regel += f'<p class="eng">Internationale naam: {html.escape(o["e"])}</p>'
         Z = o.get("is")
+        alleen_mbo = o["l"] == ["mbo"]
         if Z:
             inleiding = (f"{n} is een opleiding van een ziekenhuis, op hbo-niveau. {Z['uitleg']} "
                          "Je bent in dienst van het ziekenhuis, krijgt salaris en haalt een erkend diploma (CZO), geen bachelor.")
@@ -151,15 +157,15 @@ def main():
             f"<h1>Wat is {n}?</h1>{nl_regel}"
             f'<p class="lead">{inleiding}</p>'
             + (f"<h2>Wat kun je ermee?</h2><ul>{''.join(f'<li>{k}</li>' for k in Z['kunJe'])}</ul>"
-               f"<h2>Wat heb je ervoor nodig?</h2><ul><li><strong>Vooropleiding:</strong> {html.escape(Z['eisen'])}</li><li><strong>Het helpt als je:</strong> {', '.join(Z['eigen'])}</li></ul>"
+               f"<h2>Wat heb je ervoor nodig?</h2><ul><li><strong>Vooropleiding:</strong> {html.escape(Z['eisen'])}</li><li>Het helpt als je {als_je(Z['eigen'])}.</li></ul>"
                f"<h2>Selectie of toelatingsexamen?</h2><p>Je solliciteert bij een ziekenhuis op een vacature voor {n.lower()} in opleiding. Er zijn per ziekenhuis maar een paar plekken, dus vaak volgt een gesprek en soms een meeloopdag. Je meldt je niet aan via Studielink.</p>"
                f"<h2>Hoe lang duurt het?</h2><p>{html.escape(Z['duur'])}, in dienst van het ziekenhuis: je werkt en leert, met salaris.</p>"
                if Z else
-            (f"<h2>Wat kun je ermee?</h2><ul>{''.join(f'<li>{k}</li>' for k in f['kunJe'])}</ul>" if f["kunJe"] else "")
+            (f"<h2>Wat kun je ermee?</h2><ul>{''.join(f'<li>{k}</li>' for k in (f['kunJeMbo'] if alleen_mbo else f['kunJe']))}</ul>" if f["kunJe"] else "")
             + "<h2>Wat heb je ervoor nodig?</h2><ul>"
             + "".join(f"<li><strong>Voor {NIV[x]}:</strong> {html.escape(d['vooropleiding'].get(x, ''))}</li>" for x in o["l"] if d["vooropleiding"].get(x))
-            + (f"<li>{f['profiel']}</li>" if f["profiel"] else "")
-            + (f"<li><strong>Het helpt als je:</strong> {', '.join(f['eigen'])}</li>" if f["eigen"] else "")
+            + ((f"<li>Elk vmbo-profiel is goed. {'Het sluit mooi aan als je ' + html.escape(f['vmbo']) + ' hebt gedaan.' if f['vmbo'] else 'Wat je zelf laat zien, telt meer dan je profiel.'} Soms vraagt een opleiding een bepaald vak.</li>" if alleen_mbo else f"<li>{f['profiel']}</li>") if f["profiel"] else "")
+            + (f"<li>Het helpt als je {als_je(f['eigen'])}.</li>" if f["eigen"] else "")
             + "</ul>"
             + f"<h2>Selectie of toelatingsexamen?</h2><p>{html.escape(f['selectie']) + ' Kijk bij de opleiding zelf wat er precies gevraagd wordt.' if f['selectie'] else 'Meestal niet. Heb je de juiste vooropleiding en meld je je op tijd aan, dan mag je in principe beginnen.'}</p>"
             + f"<h2>Hoe lang duurt het?</h2><p>{' · '.join(f'{NIV[x]}: {DUUR[x]}' for x in o['l'])}"

@@ -107,7 +107,16 @@ main section>h2::before{counter-increment:stop;content:"Nr. " counter(stop,decim
 .nw{display:flex;flex-direction:column;gap:2px;background:var(--card);padding:16px 18px;border-radius:var(--r)}
 .nw span{color:var(--muted);font-size:.92rem}
 .source{color:var(--muted);font-size:.85rem;margin-top:16px}
+.m-noten{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;margin-top:18px}
+.m-noten>div{border:1px solid var(--line);border-radius:var(--r);background:var(--card);padding:14px 18px}
+.m-noten h3{margin:0 0 6px;font-size:1.05rem}.m-noten p{margin:0}
 .actief{margin:0 0 12px}.actief .chip{margin-right:6px}
+/* Filters bij alle opleidingen blijven bovenin staan tijdens het scrollen */
+.plakbalk{position:sticky;top:var(--topbar-h,96px);z-index:20;background:var(--paper);padding:10px 0 4px;margin-bottom:12px;border-bottom:1px solid var(--line)}
+.plakbalk .actief{margin:0}
+.plakbalk .actief:empty{display:none}
+.niv-hint{font-size:.9rem;color:var(--muted);margin:2px 0 6px}
+@media (max-width:640px){.plakbalk .chips{flex-wrap:nowrap;overflow-x:auto;padding-bottom:4px}.plakbalk .chip{flex:none}}
 
 /* Vertaalkaartjes en woordenlijst */
 .flips{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:18px}
@@ -1082,11 +1091,16 @@ ul.banen li{display:flex;justify-content:space-between;gap:10px;align-items:base
 .pf-check li{display:flex;gap:10px;align-items:flex-start}
 .pf-ok,.pf-nee,.pf-info{flex:none;display:inline-grid;place-items:center;width:1.35em;height:1.35em;border-radius:50%;font-weight:800;font-size:.85rem;line-height:1;color:#fff}
 .pf-ok{background:var(--green)}
+.pf-info.pf-extra{background:#b45309;margin-left:4px;font-style:normal;font-family:inherit}
+.attentie{border:1px solid #b45309;border-left-width:5px;border-radius:var(--r);padding:10px 14px;margin:10px 0 14px;background:rgba(180,83,9,.07)}
+.attentie p{margin:0 0 4px}.attentie p:last-child{margin:0}
+.attentie.zacht{border-color:var(--line);border-left-color:#b45309;background:var(--card)}
 .pf-nee{background:#c2410c}
 .pf-info{background:var(--muted);font-style:italic;font-family:Georgia,serif}
 .oplbtn .badges .pf-ok,.oplbtn .badges .pf-nee{margin-left:4px}
 .pf-lijst{list-style:none;padding-left:0}
-.pf-lijst li{display:flex;gap:8px;align-items:center}
+.pf-lijst li{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.pf-reden{flex-basis:100%;padding-left:calc(1.35em + 8px);font-size:.88rem;color:var(--muted);line-height:1.4}
 .pf-lijst{margin:8px 0 0;display:grid;gap:6px}
 @media print{
   body.print-profiel .topbar,body.print-profiel .hero,body.print-profiel main>section:not(#profiel),body.print-profiel footer,body.print-profiel .actions,body.print-profiel .profiel-form,body.print-profiel .favweg{display:none!important}
