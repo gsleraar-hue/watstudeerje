@@ -110,6 +110,8 @@ main section>h2::before{counter-increment:stop;content:"Nr. " counter(stop,decim
 .m-noten{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;margin-top:18px}
 .m-noten>div{border:1px solid var(--line);border-radius:var(--r);background:var(--card);padding:14px 18px}
 .m-noten h3{margin:0 0 6px;font-size:1.05rem}.m-noten p{margin:0}
+body.zoekt #gids .banner,body.zoekt #gids>.sub,body.zoekt #gids .filters,body.zoekt #kaart,body.zoekt #alle>.sub{display:none}
+body.zoekt #gids.geen-treffers{display:none}
 .actief{margin:0 0 12px}.actief .chip{margin-right:6px}
 /* Filters bij alle opleidingen blijven bovenin staan tijdens het scrollen */
 .plakbalk{position:sticky;top:var(--topbar-h,96px);z-index:20;background:var(--paper);padding:10px 0 4px;margin-bottom:12px;border-bottom:1px solid var(--line)}

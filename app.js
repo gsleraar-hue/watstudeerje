@@ -254,6 +254,9 @@
     list.innerHTML = "";
     res.forEach((s) => list.appendChild(card(s)));
     $("#leeg").hidden = res.length > 0;
+    // Tijdens zoeken alleen resultaten: geen banner, inleiding of campuskaart ertussen
+    document.body.classList.toggle("zoekt", !!q);
+    $("#gids").classList.toggle("geen-treffers", !!q && !res.length);
     $("#leeg").textContent = q ? "Niet bij de uitgelichte studies. Kijk hieronder bij alle opleidingen." : "Niets gevonden. Probeer een ander woord, of haal een filter weg.";
     $("#selectieAantal").textContent = STUDIES.length;
     // Teller alleen bij zoeken of filteren; anders lijkt de selectie een onvolledig zoekresultaat
@@ -2500,6 +2503,7 @@
     clearTimeout(zoekTimer);
     if (state.zoek) zoekTimer = setTimeout(() => {
       const doel = $("#lijst").children.length ? $("#gids") : $("#alle");
+      if (view !== "opleidingen") return;
       scrollTo({ top: doel.getBoundingClientRect().top + scrollY - ($(".topbar") ? $(".topbar").offsetHeight : 0) - 8, behavior: "smooth" });
     }, 350);
   });
