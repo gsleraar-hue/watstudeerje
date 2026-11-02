@@ -210,18 +210,25 @@
   const beroepCache = new Map();
   let famVan = null;
   // Staat de zoekterm in de naam van minstens één opleiding?
-  function heeftTreffer(q) {
+  // Met niveaus ("mbo hbo") tellen alleen opleidingen op die niveaus
+  function beroepTreffers(q, niv) {
     const v = zoekVarianten(q);
-    if (!v.length) return false;
+    if (!v.length) return [];
     famVan = famVan || new Map(FAMILIES.map((f) => [f.id, f]));
-    return OPLEIDINGEN.some((o) => famVan.get(o.f) && zoekScore(o, famVan.get(o.f), v) >= 60);
+    const lv = niv ? niv.split(" ") : null;
+    return OPLEIDINGEN.filter((o) => famVan.get(o.f) && (!lv || o.l.some((n) => lv.includes(n))) && zoekScore(o, famVan.get(o.f), v) >= 60);
   }
+  const heeftTreffer = (q, niv) => beroepTreffers(q, niv).length > 0;
+  // "mbo / hbo" of "hbo + vervolg" naar "mbo hbo" en "hbo"
+  const nivVan = (t) => [...new Set(String(t).toLowerCase().match(/\b(mbo|hbo|wo)\b/g) || [])].join(" ");
   // Van "Grafisch ontwerper" naar een zoekterm die opleidingen vindt, of null als er niets past
-  function beroepZoekterm(b) {
-    if (beroepCache.has(b)) return beroepCache.get(b);
-    if (Object.hasOwn(BEROEP_TERM, b)) {
-      const t = BEROEP_TERM[b] && heeftTreffer(BEROEP_TERM[b]) ? BEROEP_TERM[b] : null;
-      beroepCache.set(b, t);
+  function beroepZoekterm(b, niv = "") {
+    const sleutel = b + "|" + niv;
+    if (beroepCache.has(sleutel)) return beroepCache.get(sleutel);
+    const vast = DROOM_TERM[b] || BEROEP_TERM[b];
+    if (vast !== undefined) {
+      const t = vast && heeftTreffer(vast, niv) ? vast : null;
+      beroepCache.set(sleutel, t);
       return t;
     }
     const stam = (w) => (/[pk]er$/.test(w) ? w.slice(0, -2) : w); // ontwerper -> ontwerp, onderzoeker -> onderzoek
@@ -232,8 +239,8 @@
       // Losse woorden alleen als ze iets zeggen: "overheid" of "specialist" vindt van alles
       ws.filter((w) => !BEROEP_VAAG.has(w)).sort((x, y) => y.length - x.length).forEach((w) => kand.push(w, stam(w)));
     });
-    const term = kand.find((k) => k && heeftTreffer(k)) || null;
-    beroepCache.set(b, term);
+    const term = kand.find((k) => k && heeftTreffer(k, niv)) || null;
+    beroepCache.set(sleutel, term);
     return term;
   }
   // Een beroep in een lijst: klikbaar als er opleidingen bij te vinden zijn
@@ -246,7 +253,7 @@
     const q = state.zoek.trim().toLowerCase();
     const res = STUDIES.filter(
       (s) =>
-        (!state.niveau || s.niveau.includes(state.niveau)) &&
+        nivPast(s.niveau) &&
         (!state.gebied || s.gebied === state.gebied) &&
         (!q || zoekVarianten(q).some(({ w }) => w.every((x) => norm(haystack(s)).includes(x))))
     );
@@ -268,6 +275,8 @@
   const VORM_KORT = { bol: "Vooral leren (bol)", bbl: "Werken en leren (bbl)", werk: "Naast je werk (deeltijd, duaal, in dienst)" };
   const VORM_LANG = { bol: "bol (vooral leren, met stages)", bbl: "bbl (werken en één dag naar school)", voltijd: "voltijd", deeltijd: "deeltijd (naast je werk)", duaal: "duaal (werk en studie afwisselen)", inservice: "in dienst van een ziekenhuis (je werkt en leert, met salaris)" };
   const NIV_LABEL = { mbo: "mbo", hbo: "hbo", wo: "wo", ad: "associate degree" };
+  // state.niveau kan ook meer niveaus zijn ("mbo hbo"), bijvoorbeeld vanuit een droombaan
+  const nivPast = (lijst) => !state.niveau || state.niveau.split(" ").some((n) => lijst.includes(n));
   const EC_JAAR = { mbo: "1 tot 4 jaar, afhankelijk van het niveau", hbo: "4 jaar", wo: "3 jaar", ad: "2 jaar" };
   const VORM = { voltijd: "voltijd", deeltijd: "deeltijd", duaal: "duaal (leren en werken)", bol: "bol: naar school, met stages", bbl: "bbl: werken en leren, een paar dagen per week werken", inservice: "in dienst: je werkt in het ziekenhuis en krijgt les, met salaris" };
 
@@ -290,7 +299,7 @@
       const items = OPLEIDINGEN.filter((o) => {
         if (o.f !== f.id) return false;
         if (state.fam && f.id !== state.fam) return false;
-        if (state.niveau && !o.l.includes(state.niveau)) return false;
+        if (!nivPast(o.l)) return false;
         if (auto.length && !o.l.some((n) => auto.includes(n))) return false;
         if (state.gebied && f.gebied !== state.gebied) return false;
         if (state.vorm && !(state.vorm === "werk" ? (o.v || []).some((v) => v === "deeltijd" || v === "duaal" || v === "inservice") : (o.v || []).includes(state.vorm))) return false;
@@ -344,7 +353,7 @@
     };
     if (state.fam) addChip("Alleen: " + ((FAMILIES.find((f) => f.id === state.fam) || {}).naam || state.fam) + " (toon alles)", () => (state.fam = ""));
     if (state.gebied) addChip("Faculteit: " + GEBIEDEN[state.gebied].naam, () => (state.gebied = ""));
-    if (state.niveau) addChip("Niveau: " + NIV_LABEL[state.niveau], () => (state.niveau = ""));
+    if (state.niveau) addChip("Niveau: " + state.niveau.split(" ").map((n) => NIV_LABEL[n]).join(" of "), () => (state.niveau = ""));
     const soort = typeof schoolSoort === "function" ? schoolSoort() : "";
     if (auto.length) {
       const p = el("p", { class: "niv-hint" }, `Je zit op het ${esc(soort)}, dus je ziet eerst ${auto.map((n) => NIV_LABEL[n]).join(" en ")}. Later doorstromen naar een ander niveau? <a href="#/metro">Bekijk de routes</a> of `);
@@ -1229,12 +1238,11 @@
     const be = e.target.closest("[data-beroep]");
     if (be) {
       e.preventDefault();
-      const v = zoekVarianten(be.dataset.beroep);
-      famVan = famVan || new Map(FAMILIES.map((f) => [f.id, f]));
-      const raak = OPLEIDINGEN.filter((o) => famVan.get(o.f) && zoekScore(o, famVan.get(o.f), v) >= 60);
+      const niv = be.dataset.niveau || "";
+      const raak = beroepTreffers(be.dataset.beroep, niv);
       if (new Set(raak.map((o) => o.n)).size === 1) { openOpleiding(raak[0], famVan.get(raak[0].f)); return; }
       $("#detail").close();
-      Object.assign(state, { zoek: be.dataset.beroep, niveau: "", gebied: "", vorm: "", fam: "" });
+      Object.assign(state, { zoek: be.dataset.beroep, niveau: niv, gebied: "", vorm: "", fam: "" });
       $("#zoek").value = be.dataset.beroep;
       renderChips();
       renderList();
@@ -1579,7 +1587,7 @@
     $("#detailInhoud").innerHTML = `<div class="badges"><span class="badge gebied">Droombaan · knipoog</span></div><h2 id="dTitel">De nieuwe ${esc(d[0])}</h2><p class="eng">${esc(d[1])}</p>` +
       `<p class="praat">${vt(d[2])}</p>` +
       `<h3>Wat heb je ervoor nodig?</h3><p>${vt(d[3])}</p>` +
-      `<h3>Nog meer banen in dit vak</h3><ul class="banen">${d[4].map(([baan, niv]) => { const t = beroepZoekterm(baan); return `<li>${t ? `<a class="beroepknop" href="#/opleidingen" data-beroep="${esc(t)}"><strong>${vt(baan)}</strong></a>` : `<strong>${vt(baan)}</strong>`} <span class="badge">${esc(niv)}</span></li>`; }).join("")}</ul>` +
+      `<h3>Nog meer banen in dit vak</h3><ul class="banen">${d[4].map(([baan, niv]) => { const t = beroepZoekterm(baan, nivVan(niv)); return `<li>${t ? `<a class="beroepknop" href="#/opleidingen" data-beroep="${esc(t)}" data-niveau="${nivVan(niv)}"><strong>${vt(baan)}</strong></a>` : `<strong>${vt(baan)}</strong>`} <span class="badge">${esc(niv)}</span></li>`; }).join("")}</ul>` +
       `<h3>Opleidingen bekijken</h3><div class="mini">${d[5].map((f) => `<button type="button" data-famopen="${f}">${famNm(f)}</button>`).join("")}</div>`;
     $("#detail").showModal();
   });
