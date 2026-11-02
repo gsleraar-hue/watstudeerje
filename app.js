@@ -251,6 +251,7 @@
     list.innerHTML = "";
     res.forEach((s) => list.appendChild(card(s)));
     $("#leeg").hidden = res.length > 0;
+    $("#leeg").textContent = q ? "Niet bij de uitgelichte studies. Kijk hieronder bij alle opleidingen." : "Niets gevonden. Probeer een ander woord, of haal een filter weg.";
     $("#selectieAantal").textContent = STUDIES.length;
     // Teller alleen bij zoeken of filteren; anders lijkt de selectie een onvolledig zoekresultaat
     $("#aantal").textContent = q || state.niveau || state.gebied ? res.length + (res.length === 1 ? " studie" : " studies") + " uit de selectie" : "";
@@ -2474,10 +2475,17 @@
   Object.keys(VORM_KORT).forEach((k) => chip(vc, VORM_KORT[k], "vorm", k));
   const gc = $("#gebiedChips");
   Object.keys(GEBIEDEN).forEach((k) => chip(gc, GEBIEDEN[k].naam, "gebied", k));
+  // Na het typen naar de resultaten: staat het niet bij de uitgelichte studies, dan naar alle opleidingen
+  let zoekTimer = 0;
   $("#zoek").addEventListener("input", (e) => {
     state.zoek = e.target.value;
     renderList();
     if (state.zoek && view !== "opleidingen") go("opleidingen");
+    clearTimeout(zoekTimer);
+    if (state.zoek) zoekTimer = setTimeout(() => {
+      const doel = $("#lijst").children.length ? $("#gids") : $("#alle");
+      scrollTo({ top: doel.getBoundingClientRect().top + scrollY - ($(".topbar") ? $(".topbar").offsetHeight : 0) - 8, behavior: "smooth" });
+    }, 350);
   });
   renderChips();
   renderList();
