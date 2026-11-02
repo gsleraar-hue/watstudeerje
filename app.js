@@ -49,7 +49,7 @@
     const nl = termNl(naam) || (Object.hasOwn(ENGELSE_NAAM_NL, naam) && norm(ENGELSE_NAAM_NL[naam]) !== norm(naam) ? ENGELSE_NAAM_NL[naam] : null);
     if (nl) h += `<p class="eng">In het Nederlands: <strong>${esc(nl)}</strong></p>`;
     const kaal = (x) => String(x).toLowerCase().replace(/[^a-z]/g, "");
-    if (alt && kaal(alt) !== kaal(naam) && !(nl && kaal(alt).startsWith(kaal(naam)))) h += `<p class="eng">${label || "Ook bekend als"}: ${esc(alt)}</p>`;
+    if (alt && kaal(alt) !== kaal(naam) && !kaal(alt).startsWith(kaal(naam))) h += `<p class="eng">${label || "Ook bekend als"}: ${esc(alt)}</p>`;
     return h;
   }
 
