@@ -1,0 +1,38 @@
+# Elke maand de directe links naar opleidingspagina's controleren en aanvullen (tools/build_links.py).
+# Dode links gaan eruit, nieuwe pagina's uit DUO en de sitemaps van scholen komen erbij.
+# Het rapport staat bij de run onder "Summary". Valt meer dan 10% weg, dan faalt de run en verandert er niets.
+name: Opleidingslinks controleren
+
+on:
+  schedule:
+    - cron: "0 4 1 * *"  # de 1e van de maand, 05:00/06:00 Nederlandse tijd
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency: opleidingslinks
+
+jobs:
+  links:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Links bouwen en controleren
+        run: python tools/build_links.py
+      - name: Committen en pushen als er iets veranderd is
+        run: |
+          if git diff --quiet -- links.js; then
+            echo "Geen wijzigingen in links.js"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add links.js index.html
+          git commit -m "Opleidingslinks: maandelijkse controle"
+          git pull --rebase origin main
+          git push origin HEAD:main

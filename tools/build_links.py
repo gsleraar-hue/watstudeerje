@@ -5,8 +5,12 @@
 2. Sitemaps van de scholen zelf: per instelling de sitemap.xml (via robots.txt), en daarin de pagina waarvan
    de slug duidelijk de opleidingsnaam is. Streng: liever geen link dan een verkeerde.
 
-Schrijft links.js met HO_URL = {"naam|instelling": url}; mbo-links gaan in MBO_URL_EXTRA en vullen MBO_URL aan.
-Alleen gebruiken: python tools/build_links.py   (sitemaps worden een week bewaard in de tempmap)
+3. Controle: links die eerder gevonden zijn blijven staan zolang de pagina bestaat; dode links (404/410, of
+   doorgestuurd naar de homepage of naar een ander domein) gaan eruit, ook die uit DUO en mbo.js. Valt meer dan 10% weg, dan stopt het script.
+
+Schrijft links.js met HO_URL = {"naam|instelling": url} en een aanvulling op MBO_URL (mbo.js), en hoogt ?v= in
+index.html op als links.js verandert. Draait elke maand vanzelf via .github/workflows/links.yml.
+Met de hand: python tools/build_links.py   (sitemaps en linkstatus worden een week bewaard in de tempmap)
 """
 import collections, concurrent.futures, csv, gzip, io, json, os, re, tempfile, time, unicodedata, urllib.request
 from urllib.parse import urlparse, unquote
@@ -32,6 +36,8 @@ DOMEIN = {
     "Cibap vakschool voor vormgeving": ["www.cibap.nl"],
     "Herman Brood Academie": ["www.hermanbroodacademie.nl"],
 }
+# Eigen domeinen van onderdelen van scholen: een doorverwijzing daarheen is geen kaping
+SCHOOLDOMEIN = {"academieminerva.nl", "prinsclausconservatorium.nl", "calderacademie.nl", "jhs.nl"}
 
 
 # Paden die op een domein geen opleidingspagina zijn (NCOI: /opleidingen/x is een themapagina, LOI: programma's zonder graad)
@@ -40,7 +46,7 @@ HOST_FOUT = {"www.ncoi.nl": r"/opleidingen/", "www.loi.nl": r"/hbo/programma/"}
 
 def haal(url):
     pad = os.path.join(tempfile.gettempdir(), "duo_" + url.rsplit("/", 1)[-1])
-    if not os.path.exists(pad):
+    if not os.path.exists(pad) or time.time() - os.path.getmtime(pad) > 20 * 86400:
         urllib.request.urlretrieve(url, pad)
     return csv.DictReader(io.open(pad, encoding="utf-8-sig"))
 
@@ -107,7 +113,7 @@ def tokens(s):
     return re.findall(r"[a-z0-9]+", s.replace("&", " en "))
 
 
-STOP = {"en", "and", "van", "de", "het", "in", "of", "the", "voor", "for", "s"}
+STOP = {"en", "and", "van", "de", "het", "in", "of", "the", "voor", "for", "s", "tot"}
 # Woorden die naast de naam in een slug mogen staan (vorm, niveau, taal)
 VORM = {"voltijd": "voltijd", "voltijds": "voltijd", "fulltime": "voltijd", "deeltijd": "deeltijd", "deeltijds": "deeltijd",
         "parttime": "deeltijd", "duaal": "duaal", "dual": "duaal", "werkenenleren": "duaal", "bol": "voltijd", "bbl": "duaal"}
@@ -175,6 +181,8 @@ def varianten(namen):
             vak = [x for x in tokens(m.group(1)) if x not in STOP]
             for pre in ("leraar", "docent", "lerarenopleiding"):
                 uit.add(tuple([pre] + vak))
+        if re.search(r"leraar basisonderwijs", n, re.I):
+            uit.add(("pabo",))
     return uit
 
 
@@ -210,8 +218,45 @@ def kies(kand, niv, vormen, plaatsen):
     return best[0][1]
 
 
-def leeft(urls):
-    """Welke urls geven een pagina (status < 400); uitkomst een week bewaard."""
+EIND = {}  # url -> waar die uiteindelijk uitkomt (na doorsturen), gevuld door dood()
+NOOIT = re.compile(r"master|oude-versie|archief|omscholen|/vervallen|old-version", re.I)
+# Adressen met een code in plaats van de naam, die de school zelf aan DUO opgeeft (Open Universiteit: /studieaanbod/bps)
+CODE_URL = re.compile(r"^https://www\.ou\.nl/studieaanbod/[a-z]+$")
+
+
+def lijkt(w, x):
+    """Zelfde woord of zelfde stam: oefentherapeut ~ oefentherapie, verpleegkundige ~ verpleegkunde."""
+    if w == x:
+        return True
+    n = len(os.path.commonprefix([w, x]))
+    return min(len(w), len(x)) >= 6 and n >= max(len(w), len(x)) - 4
+
+
+def past(u, namen):
+    """Wijst een link (van DUO of een eerdere run) echt naar deze opleiding? De slug is de naam, of alle woorden
+    van de naam (of hun stam) staan in het adres, ook na doorsturen (uva.nl/ba-arabisch). Master-, archief- en kapotte links nooit."""
+    if not re.match(r"https?://[^/]", u) or NOOIT.search(u) or NOOIT.search(EIND.get(u, "")):
+        return False
+    if CODE_URL.match(u):
+        return True
+    var = varianten(namen)
+    for x in {u, EIND.get(u, u)}:
+        seg = [s for s in unquote(urlparse(x).path).split("/") if s]
+        if any(kern(tokens(re.sub(r"\.(html?|aspx|php)$", "", s))) in var for s in seg):
+            return True
+        woorden = {w for s in seg for w in tokens(s)}
+        if any(all(any(lijkt(w, x) for x in woorden) for w in v) for v in var):
+            return True
+    return False
+
+
+def domein(u):
+    return ".".join(urlparse(u if "//" in u else "//" + u).netloc.lower().split(":")[0].split(".")[-2:])
+
+
+def dood(urls, bekend=frozenset()):
+    """Urls die echt weg zijn: 404/410 of doorgestuurd naar de homepage. Geblokkeerd (403) of een time-out telt
+    niet als dood, anders verdwijnen goede links als een school bots weert. Uitkomst een week bewaard."""
     pad = os.path.join(CACHE, "_status.json")
     st = json.load(io.open(pad, encoding="utf-8")) if os.path.exists(pad) and time.time() - os.path.getmtime(pad) < 7 * 86400 else {}
 
@@ -229,8 +274,11 @@ def leeft(urls):
         for u, code, eind in ex.map(check, nieuw):
             st[u] = [code, eind]
     json.dump(st, io.open(pad, "w", encoding="utf-8"))
-    # doorgestuurd naar de homepage telt niet
-    return {u for u in urls if 200 <= st[u][0] < 400 and len([x for x in urlparse(st[u][1]).path.split("/") if x])}
+    EIND.update({u: v[1] for u, v in st.items()})
+    # ook dood: doorgestuurd naar een onbekend domein (een verlopen schooldomein kan zo bij een gokwebsite
+    # uitkomen); naar een ander domein van een school (Hanze -> Minerva) mag wel
+    return {u for u in urls if st[u][0] in (404, 410) or (200 <= st[u][0] < 400 and (
+        not [x for x in urlparse(st[u][1]).path.split("/") if x] or domein(st[u][1]) not in bekend | {domein(u)}))}
 
 
 def algemeen(u):
@@ -250,6 +298,14 @@ def main():
     od, merk = laad("opendagen.js", "OPEN_DAGEN"), laad("opendagen.js", "OD_MERK")
     mbo_url = laad("mbo.js", "MBO_URL")
     paren = {(o["n"], i) for o in opl for i in o["i"]}
+    # Vorige uitkomst: wat toen gevonden is blijft staan zolang de pagina bestaat (een sitemap die
+    # tijdelijk niet laadt kost dan geen links)
+    pad = os.path.join(SITE, "links.js")
+    vorig = io.open(pad, encoding="utf-8").read() if os.path.exists(pad) else ""
+    m = re.search(r"const HO_URL = (\{.*?\});$", vorig, re.M)
+    oud_ho = json.loads(m.group(1)) if m else {}
+    m = re.search(r"Object\.assign\(MBO_URL, (\{.*?\})\);$", vorig, re.M)
+    oud_mbo = json.loads(m.group(1)) if m else {}
 
     # 1. DUO RIO: website, eigen naam en vorm per opleiding en school
     web = collections.defaultdict(collections.Counter)
@@ -273,6 +329,22 @@ def main():
         niveau[e].add(graad[x["OPLEIDINGSEENHEIDCODE"]])
     # Meest genoemde url per opleiding en school
     duo = {f"{n}|{i}": c.most_common(1)[0][0] for (n, i), c in sorted(web.items())}
+    # Bestaande links (DUO en mbo.js) die niet meer werken tellen als ontbrekend
+    bekend = {domein(h) for c in hosts.values() for h in c} | {domein(u) for u in list(mbo_url.values()) + list(oud_ho.values()) + list(oud_mbo.values())}
+    bekend |= {domein(e["site"]) for e in od.values() if e.get("site")} | {domein(h) for d in DOMEIN.values() for h in d} | SCHOOLDOMEIN
+    weg = dood([u for u in list(duo.values()) + list(mbo_url.values()) if not algemeen(u)], bekend)
+    print(len(weg), "bestaande links van DUO en mbo.js werken niet meer")
+    per_naam = {o["n"]: o for o in opl}
+
+    def namen_ho(k):
+        n, i = k.split("|", 1)
+        return [n, per_naam[n].get("e")] + sorted(eigen.get((n, i), ()))
+
+    # DUO-links die niet bij de opleiding passen (masterpagina, oude versie, andere opleiding) tellen als ontbrekend
+    afgekeurd = {u for k, u in duo.items() if not algemeen(u) and u not in weg and not past(u, namen_ho(k))}
+    print(len(afgekeurd), "DUO-links passen niet bij de opleiding")
+    mis_mbo = [(k, u) for k, u in mbo_url.items() if not algemeen(u) and u not in weg and not past(u, [k.split("|")[0]])]
+    print(len(mis_mbo), "links in mbo.js waarvan de naam niet in het adres staat (alleen gemeld)")
 
     # 2. Domeinen per instelling: open dagen, bestaande links en DUO
     for k, u in list(duo.items()) + list(mbo_url.items()):
@@ -304,7 +376,7 @@ def main():
     for o, i, soort in allen:
         key = f"{o['n']}|{i}"
         oud = duo.get(key) if soort == "ho" else mbo_url.get(key)
-        if oud and not algemeen(oud):
+        if oud and not algemeen(oud) and oud not in weg and oud not in afgekeurd:
             continue
         if soort == "ho":
             niv = {l: [] for l in niveau.get((o["n"], i)) or o["l"]}
@@ -323,29 +395,63 @@ def main():
             (ho if soort == "ho" else extra)[key] = u
             bron[key] = u
             nivs[key] = niv
-    goed = leeft(bron.values())
-    print(len(set(bron.values()) - goed), "links uit sitemaps werken niet")
-    bron = {k: u for k, u in bron.items() if u in goed}
-    ho = {k: u for k, u in ho.items() if u in goed}
-    extra = {k: u for k, u in extra.items() if u in goed}
-    for k, u in duo.items():
-        if k not in ho and not algemeen(u):
-            ho[k] = u
-    ho = dict(sorted(ho.items()))
-    extra = dict(sorted(extra.items()))
-    io.open(os.path.join(SITE, "links.js"), "w", encoding="utf-8", newline="\n").write(
+    # Samenvoegen: vorige keer < sitemaps nu < DUO; daarna alles wat dood is eruit
+    sleutels_ho = {f"{n}|{i}" for n, i in paren}
+    sleutels_mbo = {f"{o['n']}|{i}" for o in mbo for i in o["i"]}
+    ho = {k: u for k, u in oud_ho.items() if k in sleutels_ho and past(u, namen_ho(k))} | ho
+    ho |= {k: u for k, u in duo.items() if not algemeen(u) and u not in weg and u not in afgekeurd}
+    goed_mbo = {k for k, u in mbo_url.items() if not algemeen(u) and u not in weg}
+    extra = {k: u for k, u in oud_mbo.items() if k in sleutels_mbo and k not in goed_mbo} | extra
+    weg |= dood(list(ho.values()) + list(extra.values()), bekend)
+    bron = {k: u for k, u in bron.items() if u not in weg}
+    ho = dict(sorted((k, u) for k, u in ho.items() if u not in weg))
+    extra = dict(sorted((k, u) for k, u in extra.items() if u not in weg))
+    wis = sorted(k for k, u in mbo_url.items() if u in weg and k not in extra)
+
+    # Rapport (in GitHub Actions als samenvatting van de run)
+    verdwenen = sorted(set(oud_ho) - set(ho)) + sorted(set(oud_mbo) - set(extra))
+    nieuw = sorted(set(ho) - set(oud_ho)) + sorted(set(extra) - set(oud_mbo))
+    anders = sorted(k for k in set(ho) & set(oud_ho) if ho[k] != oud_ho[k]) + sorted(k for k in set(extra) & set(oud_mbo) if extra[k] != oud_mbo[k])
+    rapport = [f"## Opleidingslinks {time.strftime('%d-%m-%Y')}", "",
+               f"- hbo/wo: {len(ho)} links (was {len(oud_ho)}); mbo aanvulling: {len(extra)} (was {len(oud_mbo)})",
+               f"- nieuw: {len(nieuw)}, andere pagina: {len(anders)}, verdwenen: {len(verdwenen)}, dode links uit mbo.js: {len(wis)}", ""]
+    for kop, lijst in (("Verdwenen", verdwenen), ("Nieuw", nieuw), ("Andere pagina", anders), ("Dood in mbo.js", wis)):
+        if lijst:
+            rapport += [f"### {kop}", ""] + [f"- {k}" for k in lijst[:100]] + ([f"- … en nog {len(lijst) - 100}"] if len(lijst) > 100 else []) + [""]
+    rapport = "\n".join(rapport)
+    print(rapport)
+    if os.environ.get("GITHUB_STEP_SUMMARY"):
+        io.open(os.environ["GITHUB_STEP_SUMMARY"], "a", encoding="utf-8").write(rapport + "\n")
+    # Valt in één keer meer dan 10% weg, dan eerst zelf kijken (site van een school vernieuwd, of geblokkeerd)
+    if len(ho) < 0.9 * len(oud_ho) or len(extra) < 0.9 * len(oud_mbo):
+        raise SystemExit("Meer dan 10% van de links valt weg; links.js is niet aangepast. Kijk eerst wat er aan de hand is.")
+
+    nieuw_js = (
         "// Bron: DUO, RIO (aangeboden ho-opleidingen, veld WEBSITE), open data CC BY, aangevuld met de sitemaps van de scholen.\n"
-        "// Gemaakt met tools/build_links.py.\n"
+        "// Gemaakt met tools/build_links.py; elke maand gecontroleerd door .github/workflows/links.yml.\n"
         "const HO_URL = " + json.dumps(ho, ensure_ascii=False, separators=(",", ":")) + ";\n"
-        "// Mbo: vult MBO_URL (mbo.js) aan waar die geen of alleen een algemene link had\n"
-        "if (typeof MBO_URL === \"object\") Object.assign(MBO_URL, " + json.dumps(extra, ensure_ascii=False, separators=(",", ":")) + ");\n")
+        "// Mbo: vult MBO_URL (mbo.js) aan waar die geen of alleen een algemene link had, en haalt dode links weg\n"
+        "if (typeof MBO_URL === \"object\") {\n"
+        "  " + json.dumps(wis, ensure_ascii=False) + ".forEach((k) => delete MBO_URL[k]);\n"
+        "  Object.assign(MBO_URL, " + json.dumps(extra, ensure_ascii=False, separators=(",", ":")) + ");\n"
+        "}\n")
+    if nieuw_js != vorig:
+        io.open(pad, "w", encoding="utf-8", newline="\n").write(nieuw_js)
+        # Nieuwe ?v= zodat browsers de nieuwe links.js ophalen
+        ix_pad = os.path.join(SITE, "index.html")
+        s = io.open(ix_pad, encoding="utf-8", newline="").read()
+        v = int(re.search(r'\?v=(\d+)"', s).group(1)) + 1
+        io.open(ix_pad, "w", encoding="utf-8", newline="").write(re.sub(r'\?v=\d+"', f'?v={v}"', s))
+        print("links.js bijgewerkt, ?v=" + str(v))
+    else:
+        print("links.js ongewijzigd")
     # Ter controle: wat uit de sitemaps kwam, met het niveau per school
     json.dump({k: [u, sorted(nivs[k])] for k, u in bron.items()}, io.open(os.path.join(CACHE, "_gekoppeld.json"), "w", encoding="utf-8"), ensure_ascii=False, indent=0)
     nho = len(paren)
     nmbo = sum(len(o["i"]) for o in mbo)
     mbo_goed = sum(1 for k, u in mbo_url.items() if not algemeen(u))
     print(f"hbo/wo: {len(ho)} van {nho} ({len(ho) / nho:.0%}), waarvan {sum(1 for k in ho if k in bron)} uit sitemaps")
-    print(f"mbo: {mbo_goed} bestaand + {len(extra)} uit sitemaps van {nmbo}")
+    print(f"mbo: {mbo_goed - len(wis)} bestaand + {len(extra)} uit sitemaps van {nmbo}")
 
 
 if __name__ == "__main__":
