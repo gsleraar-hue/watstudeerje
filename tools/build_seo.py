@@ -148,8 +148,8 @@ def main():
             inleiding = (f"{n} is een opleiding van een ziekenhuis, op hbo-niveau. {Z['uitleg']} "
                          "Je bent in dienst van het ziekenhuis, krijgt salaris en haalt een erkend diploma (CZO), geen bachelor.")
         else:
-          inleiding = (f"{n}{' (' + html.escape(o['nl']) + ')' if o['nl'] else ''} is een opleiding op {zin_niveaus(o)}{mbo_niv} "
-                       f"in de groep {html.escape(f['naam'])}. {f['uitleg']}")
+          inleiding = (f"{n}{' (' + html.escape(o['nl']) + ')' if o['nl'] else ''} is een opleiding op {zin_niveaus(o)}{mbo_niv}. "
+                       + (o["info"]["u"] if o.get("info") else f"Hij valt in de groep {html.escape(f['naam'])}. {f['uitleg']}"))
         inhoud = (
             f'<p class="kruim"><a href="../../">Home</a> › <a href="../">Opleidingen</a> › <a href="../groep/{f["id"]}/">{html.escape(f["naam"])}</a> › {n}</p>'
             f'<figure class="foto">{foto(f["id"], "../../")}</figure>'
@@ -161,7 +161,7 @@ def main():
                f"<h2>Selectie of toelatingsexamen?</h2><p>Je solliciteert bij een ziekenhuis op een vacature voor {n.lower()} in opleiding. Er zijn per ziekenhuis maar een paar plekken, dus vaak volgt een gesprek en soms een meeloopdag. Je meldt je niet aan via Studielink.</p>"
                f"<h2>Hoe lang duurt het?</h2><p>{html.escape(Z['duur'])}, in dienst van het ziekenhuis: je werkt en leert, met salaris.</p>"
                if Z else
-            (f"<h2>Wat kun je ermee?</h2><ul>{''.join(f'<li>{k}</li>' for k in (f['kunJeMbo'] if alleen_mbo else f['kunJe']))}</ul>" if f["kunJe"] else "")
+            (f"<h2>Wat kun je ermee?</h2><ul>{''.join(f'<li>{k}</li>' for k in (o['info']['k'] if o.get('info') else f['kunJeMbo'] if alleen_mbo else f['kunJe']))}</ul>" if f["kunJe"] else "")
             + "<h2>Wat heb je ervoor nodig?</h2><ul>"
             + "".join(f"<li><strong>Voor {NIV[x]}:</strong> {html.escape(d['vooropleiding'].get(x, ''))}</li>" for x in o["l"] if d["vooropleiding"].get(x))
             + ((f"<li>Elk vmbo-profiel is goed. {'Het sluit mooi aan als je ' + html.escape(f['vmbo']) + ' hebt gedaan.' if f['vmbo'] else 'Wat je zelf laat zien, telt meer dan je profiel.'} Soms vraagt een opleiding een bepaald vak.</li>" if alleen_mbo else f"<li>{f['profiel']}</li>") if f["profiel"] else "")
@@ -180,7 +180,7 @@ def main():
             + f'<div class="cta"><p><strong>Past {n} bij jou?</strong> In de app zie je hoe ver elke school van je huis is, wanneer de open dagen zijn en wat je Plan B is. Je kunt hem ook op je lijst zetten.</p>'
             f'<a class="knop" href="../../#/opl?n={quote(o["n"])}">Bekijk in de app</a><a class="knop licht" href="../../#/test">Doe de Padvinder</a></div>'
         )
-        kale_uitleg = f["uitlegKaal"]
+        kale_uitleg = re.sub(r"<[^>]+>", "", o["info"]["u"]) if o.get("info") else f["uitlegKaal"]
         beschrijving = bb.kort(f"{o['n']}{' (' + o['nl'] + ')' if o['nl'] else ''} op {zin_niveaus(o)}, uitgelegd in gewone taal: {kale_uitleg} Bij {len(scholen)} {'school' if len(scholen) == 1 else 'scholen'}.")
         ld = {"@context": "https://schema.org", "@graph": [
             {"@type": "Course", "name": o["n"], "description": kale_uitleg, "url": BASE + pad, "inLanguage": "nl",

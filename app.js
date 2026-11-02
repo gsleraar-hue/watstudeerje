@@ -369,13 +369,14 @@
     psychologie: "groep/gedrag", sw: "groep/sociaal", recht: "groep/recht", pabo: "groep/onderwijs", biomed: "studie/biomed", las: "groep/talen", biologie: "groep/groen",
   };
   const fotoPad = (p, klein) => (p ? `img/${p.replace("/", klein ? "/klein/" : "/")}.jpg` : "");
-  const fotoImg = (p, cls, klein) => (p ? `<img class="${cls}" src="${fotoPad(p, klein)}" alt="" loading="lazy">` : "");
+  const fotoImg = (p, cls, klein) => (p ? `<img class="${cls}" src="${fotoPad(p, klein)}" alt="" loading="lazy" onerror="this.remove()">` : ""); // nog geen foto: niets tonen
 
   function openOpleiding(o, f) {
     huidigeOpl = [o, f];
     const X = FAM_EXTRA[f.id];
     const Z = o.is; // ziekenhuisopleiding: solliciteren in plaats van Studielink
     const M = o.l.length === 1 && o.l[0] === "mbo" ? MBO_EXTRA[f.id] : null; // alleen mbo: beroepen, aanmelden en profiel op mbo-niveau
+    const I = typeof OPL_INFO === "object" ? OPL_INFO[o.n] : null; // uitleg en beroepen van deze opleiding zelf
     const bekender = o.e && OPLEIDINGEN.find((x) => x.n.toLowerCase() === o.e.toLowerCase() && x.n !== o.n);
     const particulier = o.i.filter((i) => PARTICULIER.has(i));
     const extra = extraEis(o, f.id);
@@ -416,8 +417,8 @@
         ? `<h3>Wat doe je?</h3><p>${vt(o.uitleg)}</p><p>Dit is een opleiding van een ziekenhuis, niet van een hogeschool. Je bent er in dienst, werkt vanaf het begin mee en krijgt les op hbo-niveau. Je haalt een erkend diploma (CZO), geen bachelor.</p>` +
           `<h3>Wat kun je ermee?</h3><ul class="beroepen">${o.kunJe.map(beroepLi).join("")}</ul>` +
           `<h3>Wat heb je ervoor nodig?</h3><ul><li><strong>Vooropleiding:</strong> ${esc(o.eisen)}</li><li>Het helpt als je ${alsJe(o.eigen)}.</li></ul><p class="praat" style="margin-top:8px">Eisen en startmomenten verschillen per ziekenhuis. Kijk bij de vacature zelf.</p>`
-        : `<h3>In welke groep valt dit?</h3><p>${esc(o.n)} hoort bij de groep <strong>${esc(f.naam)}</strong>. ${vt(f.uitleg)}</p><p>Wat je precies leert, verschilt per school: lees het programma op de website van de opleiding. <a class="beroepknop" href="#/opleidingen" data-famopen="${f.id}">Andere opleidingen in deze groep</a></p>`) +
-      (X && !Z ? `<h3>Wat kun je ermee?</h3><ul class="beroepen">${(M ? M.kunJe : X.kunJe).map(beroepLi).join("")}</ul>` : "") +
+        : `<h3>Wat leer je?</h3><p>${vt(I ? I.u : f.uitleg)}</p><p class="count">Vergelijkbare opleidingen: <a class="beroepknop" href="#/opleidingen" data-famopen="${f.id}">${esc(f.naam)}</a></p>`) +
+      (X && !Z ? `<h3>Wat kun je ermee?</h3><ul class="beroepen">${(I ? I.k : M ? M.kunJe : X.kunJe).map(beroepLi).join("")}</ul>` : "") +
       (X && !Z
         ? `<h3>Wat heb je ervoor nodig?</h3><ul><li><strong>Vooropleiding:</strong> ${o.l.map((n) => `voor ${NIV_LABEL[n]}: ${VOOROPLEIDING[n] || ""}`).join("; ")}.</li>` +
           (M ? `<li>Elk vmbo-profiel is goed. ${M.vmbo ? `Het sluit mooi aan als je ${esc(M.vmbo)} hebt gedaan.` : "Wat je zelf laat zien, telt meer dan je profiel."} Soms vraagt een opleiding een bepaald vak.</li>` : `<li>${vt(X.profiel)}</li>`) +
