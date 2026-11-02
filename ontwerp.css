@@ -500,6 +500,9 @@ footer a{color:#3157d5}
 .persona p{margin:6px 0 0;color:var(--muted);font-size:.93rem}
 h4 small,h3 small{font-weight:500;text-transform:none;letter-spacing:0;color:var(--muted)}
 .ook{margin-top:26px;border-left:4px solid var(--green);padding:4px 0 4px 16px}
+.beroepknop{color:inherit;font-weight:inherit;text-decoration:underline dotted;text-underline-offset:3px}
+.beroepknop::after{content:" →";color:var(--accent)}
+.beroepknop:hover{color:var(--accent);text-decoration-style:solid}
 .linkbtn{font:inherit;font-weight:700;color:var(--accent);background:none;border:0;padding:0;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
 .stapjes{padding-left:22px;margin:0;display:grid;gap:4px}
 .route{list-style:none;padding:0;margin:0;display:grid;gap:0;counter-reset:stap;border-left:3px solid var(--tint);margin-left:14px}

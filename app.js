@@ -200,6 +200,42 @@
     return best;
   }
 
+  /* ---------- Beroepen: doorklikken naar opleidingen die erbij passen ---------- */
+  // Woorden die in een beroep staan maar niets zeggen over de opleiding
+  const BEROEP_STOP = new Set(["medewerker", "werken", "bij", "een", "of", "in", "op", "de", "het", "van", "voor", "met", "later", "en", "eigen", "bedrijf", "via", "naar", "doorstromen", "zelfstandig", "werk", "iets", "die", "als"]);
+  const BEROEP_VAAG = new Set(["overheid", "specialist", "technisch", "creatief", "hbo", "industrie", "universiteit", "art", "maker", "account", "engineer", "licht", "data", "medisch", "tweede", "intelligentie", "adviseur", "bedrijven", "bedrijf", "zorg", "talen", "sociale", "manager", "medewerker"]);
+  const beroepCache = new Map();
+  let famVan = null;
+  // Staat de zoekterm in de naam van minstens één opleiding?
+  function heeftTreffer(q) {
+    const v = zoekVarianten(q);
+    if (!v.length) return false;
+    famVan = famVan || new Map(FAMILIES.map((f) => [f.id, f]));
+    return OPLEIDINGEN.some((o) => famVan.get(o.f) && zoekScore(o, famVan.get(o.f), v) >= 60);
+  }
+  // Van "Grafisch ontwerper" naar een zoekterm die opleidingen vindt, of null als er niets past
+  function beroepZoekterm(b) {
+    if (beroepCache.has(b)) return beroepCache.get(b);
+    if (Object.hasOwn(BEROEP_TERM, b)) {
+      const t = BEROEP_TERM[b] && heeftTreffer(BEROEP_TERM[b]) ? BEROEP_TERM[b] : null;
+      beroepCache.set(b, t);
+      return t;
+    }
+    const stam = (w) => (/[pk]er$/.test(w) ? w.slice(0, -2) : w); // ontwerper -> ontwerp, onderzoeker -> onderzoek
+    const kand = [];
+    String(b).replace(/\([^)]*\)/g, " ").replace(/:.*$/, "").split(/,| of | en |\//).map((d) => d.trim()).filter(Boolean).forEach((d) => {
+      const ws = norm(d).split(/\s+/).filter((w) => w.length > 2 && !BEROEP_STOP.has(w) && !w.endsWith("-"));
+      kand.push(ws.join(" "), ws.map(stam).join(" "));
+      // Losse woorden alleen als ze iets zeggen: "overheid" of "specialist" vindt van alles
+      ws.filter((w) => !BEROEP_VAAG.has(w)).sort((x, y) => y.length - x.length).forEach((w) => kand.push(w, stam(w)));
+    });
+    const term = kand.find((k) => k && heeftTreffer(k)) || null;
+    beroepCache.set(b, term);
+    return term;
+  }
+  // Een beroep in een lijst: klikbaar als er opleidingen bij te vinden zijn
+  const beroepLi = (b) => { const t = beroepZoekterm(b); return t ? `<li><a class="beroepknop" href="#/opleidingen" data-beroep="${esc(t)}" title="Bekijk opleidingen voor ${esc(t)}">${vt(b)}</a></li>` : `<li>${vt(b)}</li>`; };
+
   function haystack(s) {
     return [s.naam, s.engels, s.kort, s.doe, GEBIEDEN[s.gebied].naam, s.kanJe.join(" ")].join(" ").toLowerCase();
   }
@@ -371,12 +407,12 @@
       
       (Z
         ? `<h3>Wat doe je?</h3><p>${vt(o.uitleg)}</p><p>Dit is een opleiding van een ziekenhuis, niet van een hogeschool. Je bent er in dienst, werkt vanaf het begin mee en krijgt les op hbo-niveau. Je haalt een erkend diploma (CZO), geen bachelor.</p>` +
-          `<h3>Wat kun je ermee?</h3><ul>${o.kunJe.map((k) => `<li>${vt(k)}</li>`).join("")}</ul>` +
+          `<h3>Wat kun je ermee?</h3><ul class="beroepen">${o.kunJe.map(beroepLi).join("")}</ul>` +
           `<h3>Wat heb je ervoor nodig?</h3><ul><li><strong>Vooropleiding:</strong> ${esc(o.eisen)}</li><li>Het helpt als je ${alsJe(o.eigen)}.</li></ul><p class="praat" style="margin-top:8px">Eisen en startmomenten verschillen per ziekenhuis. Kijk bij de vacature zelf.</p>`
         : `<h3>In welke groep valt dit?</h3><p>${esc(o.n)} hoort bij de groep <strong>${esc(f.naam)}</strong>. ${vt(f.uitleg)}</p><p>Wat je precies leert, verschilt per school. Lees het programma op de website van de opleiding, of <button type="button" class="linkbtn" data-famopen="${f.id}">vergelijk met de andere opleidingen in deze groep</button>.</p>`) +
-      (X && !Z ? `<h3>Wat kun je ermee?</h3><ul>${(M ? M.kunJe : X.kunJe).map((k) => `<li>${vt(k)}</li>`).join("")}</ul>` : "") +
+      (X && !Z ? `<h3>Wat kun je ermee?</h3><ul class="beroepen">${(M ? M.kunJe : X.kunJe).map(beroepLi).join("")}</ul>` : "") +
       (X && !Z
-        ? `<h3>Wat heb je ervoor nodig?</h3><ul><li><strong>Vooropleiding:</strong> ${o.l.map((n) => `voor ${NIV_LABEL[n]}: ${VOOROPLEIDING[n] || ""}`).join(". ")}.</li>` +
+        ? `<h3>Wat heb je ervoor nodig?</h3><ul><li><strong>Vooropleiding:</strong> ${o.l.map((n) => `voor ${NIV_LABEL[n]}: ${VOOROPLEIDING[n] || ""}`).join("; ")}.</li>` +
           (M ? `<li>Elk vmbo-profiel is goed. ${M.vmbo ? `Het sluit mooi aan als je ${esc(M.vmbo)} hebt gedaan.` : "Wat je zelf laat zien, telt meer dan je profiel."} Soms vraagt een opleiding een bepaald vak.</li>` : `<li>${vt(X.profiel)}</li>`) +
           (o.l.includes("ad") ? `<li><strong>Associate degree:</strong> ${(o.v || []).includes("voltijd") ? "op papier volstaat havo, vwo of mbo 4. Toch zijn veel Ad's bedoeld voor mensen die al werken. Kom je direct van school, vraag dan op de open dag wie er in de klas zitten en wat ze na de Ad doen." : "deze Ad volg je alleen naast je werk (deeltijd of duaal). Je hebt dan meestal een baan of werkplek in het vak nodig. Direct na de middelbare school is dat zelden een route."} Een Ad is een volwaardig hbo-diploma; wil je daarna de bachelor, dan kost dat meestal nog 2 jaar.</li>` : "") +
           `<li>Het helpt als je ${alsJe(X.eigen)}.</li></ul><p class="praat" style="margin-top:8px">Toelatingseisen verschillen per school. Lees ze altijd bij de opleiding zelf.</p>`
@@ -448,7 +484,7 @@
       `<h2 id="dTitel">${esc(s.naam)}</h2>${naamRegels(s.naam, s.engels)}` +
       `<h3>In gewone woorden</h3><p>${vt(s.kort)}</p>` +
       `<h3>Wat doe je er?</h3><p>${vt(s.doe)}</p>` +
-      `<h3>Wat kun je ermee?</h3><ul>${s.kanJe.map((k) => `<li>${vt(k)}</li>`).join("")}</ul>` +
+      `<h3>Wat kun je ermee?</h3><ul class="beroepen">${s.kanJe.map(beroepLi).join("")}</ul>` +
       `<h3>Wat heb je ervoor nodig?</h3><p>${vt(STUDIE_NODIG[s.id] || "")}</p>` +
       `<h3>Goed om te weten</h3><p>${vt(s.let)}</p>` +
       `<h3>Praat erover</h3><p class="praat">${vt(s.praat)}</p>` +
@@ -855,7 +891,7 @@
       `<div class="vak-kol"><h3>${esc(v[0])}</h3>` +
       (oj ? `<h4>Je bent waarschijnlijk goed in</h4>${tags(oj[0])}<h4>Je bent waarschijnlijk geïnteresseerd in</h4>${tags(oj[1])}` : "") +
       `<h4>Wat je er waarschijnlijk écht leuk aan vindt</h4><p>${vt(v[1])}</p></div>` +
-      `<div class="vak-kol"><h4>Wat kun je ermee?</h4><ul class="vakwerk">${v[5].map((t) => `<li>${vt(t)}</li>`).join("")}</ul>` +
+      `<div class="vak-kol"><h4>Wat kun je ermee?</h4><ul class="vakwerk beroepen">${v[5].map(beroepLi).join("")}</ul>` +
       `<h4>Waar dat terugkomt</h4><p>${vt(v[2])}</p>` +
       `<p class="vak-let"><strong>Anders dan je misschien denkt:</strong> ${vt(v[3])}</p>` +
       `<p><button type="button" class="btn" data-fams="${esc(v[4])}">Bekijk die opleidingen</button></p></div>`;
@@ -1178,6 +1214,17 @@
   document.addEventListener("click", (e) => {
     const fo = e.target.closest("[data-famopen]");
     if (fo) { $("#detail").close(); openFamily(fo.dataset.famopen); return; }
+    const be = e.target.closest("[data-beroep]");
+    if (be) {
+      e.preventDefault();
+      $("#detail").close();
+      Object.assign(state, { zoek: be.dataset.beroep, niveau: "", gebied: "", vorm: "" });
+      $("#zoek").value = be.dataset.beroep;
+      renderChips();
+      renderList();
+      go("opleidingen", "alle");
+      return;
+    }
     const g = e.target.closest("[data-gebied]");
     if (g) openRegion(g.dataset.gebied);
   });
