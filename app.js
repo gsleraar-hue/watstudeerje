@@ -390,12 +390,19 @@
     const M = o.l.length === 1 && o.l[0] === "mbo" ? MBO_EXTRA[f.id] : null; // alleen mbo: beroepen, aanmelden en profiel op mbo-niveau
     const I = typeof OPL_INFO === "object" ? OPL_INFO[o.n] : null; // uitleg en beroepen van deze opleiding zelf
     const bekender = o.e && OPLEIDINGEN.find((x) => x.n.toLowerCase() === o.e.toLowerCase() && x.n !== o.n);
-    const particulier = o.i.filter((i) => PARTICULIER.has(i));
+    // Nieuwe opleiding (2027): ook de scholen die nu de opleidingen geven waar hij op lijkt, anders lijkt alles ver weg
+    const voor = o.nw ? o.nw.lijkt.map((n) => OPLEIDINGEN.find((x) => x.n === n)).filter(Boolean) : [];
+    const via = {}; // school -> opleiding die die school nu geeft
+    voor.forEach((x) => x.i.forEach((i) => { if (!o.i.includes(i) && !via[i]) via[i] = x.n; }));
+    const alleI = o.i.concat(Object.keys(via));
+    const particulier = alleI.filter((i) => PARTICULIER.has(i));
     const extra = extraEis(o, f.id);
     const per = dichtsteBij(o.n);
-    const gesorteerd = (thuis ? o.i.slice().sort((a, b) => ((per[a] || {}).d ?? 1e9) - ((per[b] || {}).d ?? 1e9)) : o.i.slice())
+    voor.forEach((x) => Object.entries(dichtsteBij(x.n)).forEach(([i, p]) => { if (via[i] === x.n) per[i] = p; }));
+    const gesorteerd = (thuis ? alleI.slice().sort((a, b) => ((per[a] || {}).d ?? 1e9) - ((per[b] || {}).d ?? 1e9)) : o.i.slice())
       .sort((a, b) => PARTICULIER.has(a) - PARTICULIER.has(b)); // particuliere scholen achteraan
     const insts = gesorteerd.slice(0, 40);
+    const schoolLi = (i) => via[i] ? schoolRegel(i, via[i], per[i]).replace(/<\/li>$/, `<br><span class="od-next">Geeft nu ${esc(via[i])}</span></li>`) : schoolRegel(i, o.n, per[i]);
     let reis = `<div class="reis">${woonInput("woonDialog")}`;
     if (!thuis) {
       reis += `<p>Vul in waar je woont, dan zie je hoe ver elke school is en hoe lang je ongeveer reist.</p>`;
@@ -456,10 +463,12 @@
       `<h3>Hoe lang?</h3><p>${Z ? esc(o.duur) : o.l.map((n) => `${NIV_LABEL[n]}${n === "mbo" && o.mn && o.mn.length ? " niveau " + o.mn.join(", ") : ""}: ${EC_JAAR[n]}`).join(" · ")}</p>` +
       ((o.v || []).length ? `<h3>Hoe kun je hem volgen?</h3><p>${o.v.map((v) => VORM_LANG[v] || v).join(", ")}.${o.v.some((v) => v === "bol" || v === "bbl") ? ` <a href="#leerwerk">Bol of bbl: wat past bij jou? →</a>` : o.v.some((v) => v === "deeltijd" || v === "duaal") ? ` <a href="#leerwerk">Werken en leren: hoe zit dat? →</a>` : ""}</p>` : "") +
       `<h3>Hoe studeer je?</h3><p>${o.v.map((v) => VORM[v] || v).join(", ") || "onbekend"}</p>` +
-      `<h3>Waar kan het? (${o.i.length} ${Z ? "ziekenhuizen" : o.i.length === 1 ? "school" : "scholen"})</h3>${reis}<ul class="scholen">${insts.map((i) => schoolRegel(i, o.n, per[i])).join("")}</ul>` +
+      `<h3>Waar kan het? (${alleI.length} ${Z ? "ziekenhuizen" : alleI.length === 1 ? "school" : "scholen"})</h3>${reis}` +
+      (voor.length ? `<p>${o.i.length === 1 ? "Eén school biedt" : `${o.i.length} scholen bieden`} deze nieuwe opleiding al aan. De andere scholen hieronder geven nu ${voor.map((x) => esc(x.n)).join(" of ")} en stappen vanaf ${esc(o.nw.jaar)} waarschijnlijk over. Vraag het na bij de school.</p>` : "") +
+      `<ul class="scholen">${insts.map(schoolLi).join("")}</ul>` +
       (Z ? `<p>Veel meer ziekenhuizen leiden op. Kijk ook bij het ziekenhuis bij jou in de buurt.</p>` : "") +
       (particulier.length ? `<div class="attentie"><p><strong>Let op: ${particulier.length === 1 ? "particuliere school" : "particuliere scholen"}</strong></p><p>${particulier.map(esc).join(", ")} ${particulier.length === 1 ? "krijgt" : "krijgen"} geen geld van de overheid. Je betaalt daar een veel hoger ${M ? "lesgeld" : "collegegeld"}, vaak vele malen het gewone bedrag. Particuliere opleidingen zijn meestal bedoeld voor volwassenen die naast hun werk leren. Kom je van de middelbare school, kijk dan eerst bij de andere scholen.</p></div>` : "") +
-      (o.i.length > insts.length ? `<p style="color:var(--muted)">en ${o.i.length - insts.length} andere</p>` : "") +
+      (alleI.length > insts.length ? `<p style="color:var(--muted)">en ${alleI.length - insts.length} andere</p>` : "") +
       `<p class="praat" style="margin-top:16px">Namen kunnen misleiden. Vergelijk altijd het programma van twee scholen en lees de toelatingseisen op de website van de opleiding zelf.</p>`;
     const d = $("#detail");
     if (d.showModal) d.showModal();
