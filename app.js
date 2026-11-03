@@ -172,6 +172,8 @@
     architect: ["architectuur", "bouwkunde"], accountant: ["accountancy"], boer: ["landbouw", "veehouderij"], dierverzorger: ["dierverzorging"],
     juf: ["leraar basisonderwijs", "pedagogisch"], meester: ["leraar basisonderwijs", "pedagogisch"], onderwijzer: ["leraar basisonderwijs"],
     gymleraar: ["lichamelijke opvoeding", "sport"], gymdocent: ["lichamelijke opvoeding"], kinderopvang: ["pedagogisch"],
+    elektromonteur: ["monteur elektrotechn"], elektricien: ["monteur elektrotechn"], loodgieter: ["monteur werktuigkundige installaties", "installatietechniek"],
+    installateur: ["installaties", "installatietechniek"], automonteur: ["autotechnicus"], monteur: ["monteur"],
   };
   const VAK_ALIAS = { gym: "lichamelijke opvoeding", wiskunde: "wiskunde", economie: "economie", nederlands: "nederlands", engels: "engels" };
   // Eén zoekvraag wordt een paar varianten: de vraag zelf, beroepen en samenstellingen als "geschiedenisleraar"
@@ -189,14 +191,21 @@
     return uit;
   }
   // 100 = naam is precies de vraag, 80/60 = alle woorden in de naam, 40 = in de Engelse naam, 5 = alleen in de groep
+  // Staat x in de tekst, of een woord met dezelfde stam (verpleegkunde ~ verpleegkundige)?
+  function bevat(tekst, x) {
+    if (tekst.includes(x)) return true;
+    if (x.length < 7) return false;
+    const stam = x.slice(0, -1);
+    return tekst.split(/[^a-z0-9]+/).some((y) => y.startsWith(stam));
+  }
   function zoekScore(o, f, varianten) {
     const n = norm(o.n), ne = n + " " + norm(o.e), alles = ne + " " + norm(f.naam + " " + f.uitleg);
     let best = 0;
     varianten.forEach(({ w, straf }) => {
       let sc = 0;
       if (n === w.join(" ")) sc = 100;
-      else if (w.every((x) => n.includes(x))) sc = n.startsWith(w[0]) || n.includes(" " + w[0]) ? 80 : 60;
-      else if (w.every((x) => ne.includes(x))) sc = 40;
+      else if (w.every((x) => bevat(n, x))) sc = n.startsWith(w[0]) || n.includes(" " + w[0]) ? 80 : 60;
+      else if (w.every((x) => bevat(ne, x))) sc = 40;
       else if (w.every((x) => alles.includes(x))) sc = 5;
       if (sc) best = Math.max(best, sc - straf);
     });
@@ -286,8 +295,45 @@
     if (state.autoUit || state.niveau || state.zoek || typeof schoolSoort !== "function") return [];
     return AUTO_NIV[schoolSoort()] || [];
   }
+  // Zoeken op plaats ("enschede", "verpleegkunde enschede") of school ("saxion", "roc van twente")
+  // Een plaats telt als de opleiding binnen zoveel km wordt gegeven (Enschede vindt ook Hengelo);
+  // niets dichtbij, dan zoeken we verder weg
+  const ZOEK_KM = [15, 30, 50];
+  let plaatsIndex = null;
+  const PLAATS_ALIAS = { "den haag": "'s-gravenhage", "s-gravenhage": "'s-gravenhage", "den bosch": "'s-hertogenbosch", "s-hertogenbosch": "'s-hertogenbosch" };
+  function plekSchoolZoek(q) {
+    const uit = { plaats: null, scholen: null, rest: q };
+    const ws = norm(q).trim().split(/\s+/).filter(Boolean);
+    if (!ws.length) return uit;
+    if (!plaatsIndex) {
+      plaatsIndex = new Map();
+      WP.forEach((w) => { if (!plaatsIndex.has(norm(w.naam))) plaatsIndex.set(norm(w.naam), w); });
+    }
+    const plaats = (t) => plaatsIndex.get(PLAATS_ALIAS[t] || t) || null;
+    for (let k = Math.min(3, ws.length); k >= 1 && !uit.plaats; k--) {
+      for (const [deel, rest] of [[ws.slice(-k), ws.slice(0, -k)], [ws.slice(0, k), ws.slice(k)]]) {
+        const p = plaats(deel.join(" "));
+        if (p) { uit.plaats = p; uit.rest = rest.filter((w) => w !== "in").join(" "); break; }
+      }
+    }
+    // School alleen als de rest geen opleiding is ("techniek" is een opleiding, ook al heet een ROC-college zo)
+    const r = norm(uit.rest).trim();
+    if (r.length >= 3 && !heeftTreffer(r)) {
+      const rw = r.split(/\s+/).map((w) => new RegExp("(^|[^a-z0-9])" + w.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
+      const sch = new Set(OPLEIDINGEN.flatMap((o) => o.i).filter((i) => rw.every((x) => x.test(norm(i)))));
+      if (sch.size) { uit.scholen = sch; uit.rest = ""; }
+    }
+    return uit;
+  }
+
   function renderFamilies() {
-    const varianten = zoekVarianten(state.zoek);
+    const pz = plekSchoolZoek(state.zoek);
+    const varianten = zoekVarianten(pz.rest);
+    const binnen = (o, d) => plekkenVan(o.n).some((p) => km(pz.plaats, { lat: p[2], lon: p[3] }) <= d);
+    let straal = pz.plaats ? ZOEK_KM.find((d) => OPLEIDINGEN.some((o) => (!varianten.length || zoekScore(o, FAMILIES.find((f) => f.id === o.f) || { naam: "", uitleg: "" }, varianten) >= 38) && binnen(o, d))) : 0;
+    // Ook op 50 km niets: dan alle plekken laten zien in plaats van iets wat er niet op lijkt
+    const nergensDichtbij = pz.plaats && !straal ? pz.plaats.naam : "";
+    if (nergensDichtbij) pz.plaats = null;
     const auto = autoNiveau();
     const words = varianten.length ? varianten[0].w : [];
     const wrap = $("#families");
@@ -303,6 +349,8 @@
         if (auto.length && !o.l.some((n) => auto.includes(n))) return false;
         if (state.gebied && f.gebied !== state.gebied) return false;
         if (state.vorm && !(state.vorm === "werk" ? (o.v || []).some((v) => v === "deeltijd" || v === "duaal" || v === "inservice") : (o.v || []).includes(state.vorm))) return false;
+        if (pz.plaats && !binnen(o, straal)) return false;
+        if (pz.scholen && !o.i.some((i) => pz.scholen.has(i))) return false;
         if (!varianten.length) return true;
         const sc = zoekScore(o, f, varianten);
         score.set(o, sc);
@@ -325,7 +373,7 @@
       if (perGebied) perGebied[f.gebied] = (perGebied[f.gebied] || 0) + items.length;
       const d = el("details", { class: "fam", id: "fam-" + f.id });
       d.dataset.fam = f.id;
-      if (open.has(f.id) || words.length || state.gebied) d.open = true;
+      if (open.has(f.id) || words.length || state.gebied || pz.plaats || pz.scholen) d.open = true;
       d.innerHTML =
         `<summary><span class="femoji">${FAM_EXTRA[f.id].e}</span><span class="fname">${esc(f.naam)}</span><span class="fcount">${items.length}</span><span class="fgebied">${esc(GEBIEDEN[f.gebied].naam)}</span></summary>` +
         `<p class="fuitleg">${vt(f.uitleg)}</p>`;
@@ -368,6 +416,9 @@
     }
     if (state.vorm) addChip("Leervorm: " + VORM_KORT[state.vorm], () => (state.vorm = ""));
     if (state.zoek) addChip("Zoekterm: " + state.zoek, () => { state.zoek = ""; $("#zoek").value = ""; });
+    if (nergensDichtbij) act.appendChild(el("p", { class: "niv-hint" }, `Niet binnen ${ZOEK_KM[ZOEK_KM.length - 1]} km van ${esc(nergensDichtbij)}. Je ziet hieronder alle plekken; vul bij een opleiding je woonplaats in voor de afstand.`));
+    if (pz.plaats) act.appendChild(el("p", { class: "niv-hint" }, `Opleidingen binnen ${straal} km van ${esc(pz.plaats.naam)}${straal > ZOEK_KM[0] ? ` (dichterbij is er niets)` : ""}.`));
+    if (pz.scholen) act.appendChild(el("p", { class: "niv-hint" }, `Opleidingen van ${[...pz.scholen].slice(0, 3).map(esc).join(", ")}${pz.scholen.size > 3 ? ` en ${pz.scholen.size - 3} andere` : ""}.`));
     if ($("#kaartKaart").firstChild) zoekOpKaart($("#kaartKaart"), perGebied);
     $("#alleLeeg").hidden = total > 0;
     $("#alleAantal").textContent = OPLEIDINGEN.length;
