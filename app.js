@@ -1644,7 +1644,10 @@
     planStappen().filter((x) => x.datum).forEach((x) => ev.push([d8(x.datum), x.titel]));
     openDagenVoorLijst().forEach((x) => ev.push([x.dag.datum.replace(/-/g, ""), `${x.dag.soort || "Open dag"} ${x.inst}`]));
     const regels = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Wat studeer je eigenlijk//NL"];
-    ev.forEach(([d, t], i) => regels.push("BEGIN:VEVENT", `UID:wsje-${i}-${d}@watstudeerje`, `DTSTAMP:${d8(new Date())}T000000Z`, `DTSTART;VALUE=DATE:${d}`, `SUMMARY:${t.replace(/[,;]/g, " ")}`, "END:VEVENT"));
+    ev.forEach(([d, t], i) => regels.push("BEGIN:VEVENT", `UID:wsje-${i}-${d}@watstudeerje`, `DTSTAMP:${d8(new Date())}T000000Z`, `DTSTART;VALUE=DATE:${d}`, `SUMMARY:${t.replace(/[,;]/g, " ")}`,
+      // herinneringen om 9:00 een week en een dag van tevoren (een hele-dag-afspraak begint om 0:00)
+      ...[["-P6DT15H", "over een week"], ["-PT15H", "morgen"]].flatMap(([trig, wanneer]) => ["BEGIN:VALARM", "ACTION:DISPLAY", `TRIGGER:${trig}`, `DESCRIPTION:${t.replace(/[,;]/g, " ")} (${wanneer})`, "END:VALARM"]),
+      "END:VEVENT"));
     regels.push("END:VCALENDAR");
     const url = URL.createObjectURL(new Blob([regels.join("\r\n")], { type: "text/calendar" }));
     const l = document.createElement("a");
