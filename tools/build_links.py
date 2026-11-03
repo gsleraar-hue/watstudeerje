@@ -257,6 +257,7 @@ def domein(u):
 def dood(urls, bekend=frozenset()):
     """Urls die echt weg zijn: 404/410 of doorgestuurd naar de homepage. Geblokkeerd (403) of een time-out telt
     niet als dood, anders verdwijnen goede links als een school bots weert. Uitkomst een week bewaard."""
+    os.makedirs(CACHE, exist_ok=True)
     pad = os.path.join(CACHE, "_status.json")
     st = json.load(io.open(pad, encoding="utf-8")) if os.path.exists(pad) and time.time() - os.path.getmtime(pad) < 7 * 86400 else {}
 
