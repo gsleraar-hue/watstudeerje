@@ -407,13 +407,18 @@
     if (!thuis) {
       reis += `<p>Vul in waar je woont, dan zie je hoe ver elke school is en hoe lang je ongeveer reist.</p>`;
     } else {
-      const afst = Object.values(per).map((x) => x.d);
+      // Afstand tot de dichtstbijzijnde gewone school uit de lijst; particuliere scholen staan onderaan en tellen apart
+      const metPlek = alleI.filter((i) => per[i]);
+      const gewoon = metPlek.filter((i) => !PARTICULIER.has(i));
+      const afst = (gewoon.length ? gewoon : metPlek).map((i) => per[i].d);
       const best = afst.length ? Math.min(...afst) : null;
+      const privDichtbij = gewoon.length ? metPlek.filter((i) => PARTICULIER.has(i) && per[i].d < best - 5).sort((a, b) => per[a].d - per[b].d)[0] : null;
       if (best === null) reis += `<p>Van deze opleiding is geen locatie bekend.</p>`;
       else if (o.is && best > 40) reis += `<p><strong>Dit zijn niet alle ziekenhuizen die opleiden.</strong> Het dichtstbijzijnde hier is ${afstandTekst(best)}, maar de kans is groot dat een ziekenhuis bij jou in de buurt ook opleidt. Kijk op de werkenbij-site van dat ziekenhuis.</p>`;
       else if (best < 25) reis += `<p><strong>Thuis blijven wonen kan prima.</strong> De dichtstbijzijnde school is ${afstandTekst(best)}.</p>`;
       else if (best <= 60) reis += `<p><strong>Reizen kan.</strong> De dichtstbijzijnde school is ${afstandTekst(best)} (enkele reis, indicatie). Veel studenten reizen zo'n afstand dagelijks.</p>`;
       else reis += `<p><strong>Dat is ver weg:</strong> de dichtstbijzijnde school is ${afstandTekst(best)}. Elke dag reizen of op kamers gaan? Dat is een persoonlijke afweging: reistijd, geld, hoe zelfstandig je al bent en wat thuis kan. Bespreek het eerst met je ouders of verzorgers. Kies je voor een kamer, begin dan op tijd met zoeken.</p>`;
+      if (privDichtbij) reis += `<p>Dichterbij zit ${esc(privDichtbij)} (${esc(per[privDichtbij].pl)}, ${afstandTekst(per[privDichtbij].d)}), maar dat is een particuliere school met hoog lesgeld. Die staat onderaan de lijst.</p>`;
       if (best !== null && best > 40 && !o.is) {
         const alt = OPLEIDINGEN.filter((x) => x.f === o.f && x.n !== o.n).map((x) => {
           let m = 1e9;
@@ -507,6 +512,25 @@
     return b;
   }
 
+  // Uitgelichte studie -> de opleidingen zelf (met scholen en afstand), niet de hele groep.
+  // Elk woord moet aan het begin van een woord in de naam staan: "sport" vindt Sportkunde, niet Transport.
+  // Alleen op de niveaus van de studie (ad telt als hbo), en lerarenopleidingen alleen bij de pabo.
+  const STUDIE_TERM = {
+    verpleegkunde: "verpleeg", fysio: "fysiotherap", sport: "sport", ba: "bedrijfskunde", iba: "international business",
+    marketing: ["commerciele economie", "marketing management"], hrm: "human resource management", informatica: "informatica", datascience: "data science",
+    softdev: "software develop", ct: "creative technology", ido: "industrieel product ontwerpen", cmd: "communication and multimedia design",
+    mediamaker: "mediamaker", mic: ["communicatie", "media en informatie"], creativebiz: "creative business", psychologie: "psychologie",
+    sw: ["sociaal werk", "social work"], recht: "recht", pabo: "leraar basisonderwijs", biomed: "biomedische wetenschappen", las: "liberal arts", biologie: "biologie",
+  };
+  const NIV_VOLG = { mbo: 0, ad: 1, hbo: 2, wo: 3 };
+  function studieOpls(s) {
+    const termen = [].concat(STUDIE_TERM[s.id] || []).map((t) => t.split(" ").map((w) => new RegExp("(^|[^a-z0-9])" + w)));
+    const niv = new Set(s.niveau.includes("hbo") ? s.niveau.concat("ad") : s.niveau);
+    return OPLEIDINGEN.filter((o) => termen.some((ws) => ws.every((r) => r.test(norm(o.n)))) && o.l.some((n) => niv.has(n))
+      && (s.id === "pabo" || !/^opleiding tot leraar/i.test(o.n)) && !(s.id === "mic" && /technologie/i.test(o.n)))
+      .sort((a, b) => Math.min(...a.l.map((n) => NIV_VOLG[n])) - Math.min(...b.l.map((n) => NIV_VOLG[n])) || b.i.length - a.i.length);
+  }
+
   function openDetail(id) {
     const s = STUDIES.find((x) => x.id === id);
     if (!s) return;
@@ -520,7 +544,8 @@
       `<h3>Goed om te weten</h3><p>${vt(s.let)}</p>` +
       `<h3>Praat erover</h3><p class="praat">${vt(s.praat)}</p>` +
       personaHtml(s.gebied, s.niveau) +
-      (STUDIE_FAM[s.id] ? `<p style="margin-top:18px"><button type="button" class="btn" data-famopen="${STUDIE_FAM[s.id]}">Bekijk waar je dit kunt studeren</button></p>` : "");
+      (studieOpls(s).length ? `<h3>Waar kun je dit studeren?</h3><p>Kies een opleiding: dan zie je alle scholen en hoe ver ze van je af zijn.</p><div class="mini">${studieOpls(s).map((o) => `<button type="button" data-oplnaam="${esc(o.n)}">${esc(o.n)} <small style="color:var(--muted)">${o.l.map((n) => NIV_LABEL[n]).join(", ")} · ${o.i.length} ${o.i.length === 1 ? "school" : "scholen"}</small></button>`).join("")}</div>` : "") +
+      (STUDIE_FAM[s.id] ? `<p class="count">Vergelijkbare opleidingen: <a class="beroepknop" href="#/opleidingen" data-famopen="${STUDIE_FAM[s.id]}">${esc(FAMILIES.find((f) => f.id === STUDIE_FAM[s.id]).naam)}</a></p>` : "");
     const d = $("#detail");
     if (d.showModal) d.showModal();
     else d.setAttribute("open", "");
