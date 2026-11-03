@@ -151,6 +151,10 @@ def main():
         else:
           inleiding = (f"{n}{' (' + html.escape(o['nl']) + ')' if o['nl'] else ''} is een opleiding op {zin_niveaus(o)}{mbo_niv}. "
                        + (o["info"]["u"] if o.get("info") else f"Hij valt in de groep {html.escape(f['naam'])}. {f['uitleg']}"))
+          if o.get("nw"):  # nieuwe mbo-opleiding: nog bij weinig scholen bekend
+              aantal = "biedt nog maar één school" if len(o["i"]) == 1 else f"bieden nog maar {len(o['i'])} scholen"
+              lijkt = lijst(f'<a href="../{slugs[x]}/">{html.escape(x)}</a>' for x in o["nw"]["lijkt"] if x in slugs)
+              inleiding += f" Dit is een nieuwe opleiding vanaf schooljaar {o['nw']['jaar']}; nu {aantal} hem aan. Hij lijkt op {lijkt}."
         inhoud = (
             f'<p class="kruim"><a href="../../">Home</a> › <a href="../">Opleidingen</a> › <a href="../groep/{f["id"]}/">{html.escape(f["naam"])}</a> › {n}</p>'
             f'<figure class="foto">{foto(f["id"], "../../")}</figure>'

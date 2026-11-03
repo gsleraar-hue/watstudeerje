@@ -44,7 +44,7 @@ const out = {
       kunJeMbo: MBO_EXTRA[f.id] ? MBO_EXTRA[f.id].kunJe.map(vt) : [], vmbo: MBO_EXTRA[f.id] ? MBO_EXTRA[f.id].vmbo : "" };
   }),
   vooropleiding: VOOROPLEIDING,
-  opleidingen: OPLEIDINGEN.map((o) => ({ n: o.n, e: o.e || "", nl: termNl(o.n), f: o.f, l: o.l, i: o.i, p: o.p || [], v: o.v || [], mn: o.mn || [], info: OPL_INFO[o.n] ? { u: vt(OPL_INFO[o.n].u), k: OPL_INFO[o.n].k.map(vt) } : null, is: o.is ? { uitleg: vt(o.uitleg), kunJe: o.kunJe.map(vt), eisen: o.eisen, eigen: o.eigen.map(vt), duur: o.duur } : null })),
+  opleidingen: OPLEIDINGEN.map((o) => ({ n: o.n, e: o.e || "", nl: termNl(o.n), f: o.f, l: o.l, i: o.i, p: o.p || [], v: o.v || [], mn: o.mn || [], nw: o.nw || null, info: OPL_INFO[o.n] ? { u: vt(OPL_INFO[o.n].u), k: OPL_INFO[o.n].k.map(vt) } : null, is: o.is ? { uitleg: vt(o.uitleg), kunJe: o.kunJe.map(vt), eisen: o.eisen, eigen: o.eigen.map(vt), duur: o.duur } : null })),
 };
 document.getElementById("data").textContent = "@@BEGIN@@" + JSON.stringify(out) + "@@EIND@@";
 </script>
