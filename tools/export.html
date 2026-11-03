@@ -9,6 +9,9 @@
 <script src="../zorg-inservice.js"></script>
 <script src="../uitleg.js"></script>
 <script src="../opl-info.js"></script>
+<script src="../locaties.js"></script>
+<script src="../opendagen.js"></script>
+<script src="../scholen.js"></script>
 <script>
 // Zelfde samenvoeging en vertaling als app.js, zodat de vaste pagina's precies zeggen wat de app zegt
 const bestaand = new Map(OPLEIDINGEN.map((o) => [o.n.toLowerCase(), o]));
@@ -35,7 +38,23 @@ const vt = (s) => {
   });
 };
 const termNl = (s) => termMap.get(String(s).toLowerCase().replace(/[ -]/g, "")) || null;
+// Per opleiding de scholen waar je hem volgt: [school, plaats, adres, niveaus daar]
+const plekNamen = new Set(Object.keys(SCHOOL_PLEK).map((k) => k.split("|")[0]));
+const schoolVan = (inst, pl) => (SCHOOL_PLEK[inst + "|" + pl] ?? SCHOOL_VAN[inst]);
+function scholenVan(o) {
+  const k = o.n.toLowerCase(), uit = new Map();
+  const hoNiv = o.l.filter((x) => x !== "mbo");
+  const ho = (inst) => { const n = hoNiv.filter((x) => !INST_NIV[inst] || INST_NIV[inst].includes(x)); return n.length ? n : hoNiv; };
+  const zet = (s, pl, adres, lv) => { if (s === undefined) return; const key = s + "|" + pl + "|" + adres; if (!uit.has(key)) uit.set(key, [s, pl, adres, lv]); };
+  (LOC[k] || []).forEach(([inst, pl]) => zet(schoolVan(inst, pl), pl, "", ho(inst)));
+  (LOC_MBO[k] || []).forEach(([ii, pi]) => zet(schoolVan(MBO_INSTS[ii], MBO_PLEK[pi][0]), MBO_PLEK[pi][0], MBO_PLEK[pi][3] || "", ["mbo"]));
+  // Zonder plek in de data (geen adres bekend): toch bij de school laten zien
+  const gehad = new Set([...uit.values()].map((x) => x[0]));
+  if (!o.is) o.i.forEach((inst) => { const s = SCHOOL_VAN[inst]; if (s !== undefined && !gehad.has(s)) { gehad.add(s); zet(s, "", "", SCHOLEN[s].t === "hogeschool" || SCHOLEN[s].t === "universiteit" ? ho(inst) : ["mbo"]); } });
+  return [...uit.values()];
+}
 const out = {
+  scholen: SCHOLEN.map((s) => ({ ...s, od: OPEN_DAGEN[s.n] ? OPEN_DAGEN[s.n].site : "" })),
   gebieden: Object.fromEntries(Object.entries(GEBIEDEN).map(([k, g]) => [k, { naam: g.naam, uitleg: vt(g.uitleg) }])),
   families: FAMILIES.map((f) => {
     const X = FAM_EXTRA[f.id];
@@ -44,7 +63,7 @@ const out = {
       kunJeMbo: MBO_EXTRA[f.id] ? MBO_EXTRA[f.id].kunJe.map(vt) : [], vmbo: MBO_EXTRA[f.id] ? MBO_EXTRA[f.id].vmbo : "" };
   }),
   vooropleiding: VOOROPLEIDING,
-  opleidingen: OPLEIDINGEN.map((o) => ({ n: o.n, e: o.e || "", nl: termNl(o.n), f: o.f, l: o.l, i: o.i, p: o.p || [], v: o.v || [], mn: o.mn || [], nw: o.nw || null, info: OPL_INFO[o.n] ? { u: vt(OPL_INFO[o.n].u), k: OPL_INFO[o.n].k.map(vt) } : null, is: o.is ? { uitleg: vt(o.uitleg), kunJe: o.kunJe.map(vt), eisen: o.eisen, eigen: o.eigen.map(vt), duur: o.duur } : null })),
+  opleidingen: OPLEIDINGEN.map((o) => ({ n: o.n, e: o.e || "", nl: termNl(o.n), f: o.f, l: o.l, i: o.i, p: o.p || [], v: o.v || [], mn: o.mn || [], nw: o.nw || null, sch: scholenVan(o), los: o.is ? o.i : o.i.filter((i) => SCHOOL_VAN[i] === undefined && !plekNamen.has(i)), info: OPL_INFO[o.n] ? { u: vt(OPL_INFO[o.n].u), k: OPL_INFO[o.n].k.map(vt) } : null, is: o.is ? { uitleg: vt(o.uitleg), kunJe: o.kunJe.map(vt), eisen: o.eisen, eigen: o.eigen.map(vt), duur: o.duur } : null })),
 };
 document.getElementById("data").textContent = "@@BEGIN@@" + JSON.stringify(out) + "@@EIND@@";
 </script>

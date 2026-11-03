@@ -20,6 +20,7 @@ Open daarna http://localhost:8765.
 | `data.js` | Richtingen, test-stellingen, 23 opleidingen met eigen uitleg |
 | `uitleg.js` | Wat kun je ermee en wat heb je nodig per groep, woordenlijst, Engelse namen |
 | `opleidingen.js` | 547 hbo/wo-opleidingen, gegroepeerd (gegenereerd uit DUO-data) |
+| `scholen.js` | Welke vestiging bij welke school hoort, voor de schoolpagina's (`tools/build_scholen.py`, daarna `tools/build_seo.py`) |
 
 ## Bronnen
 

@@ -301,6 +301,30 @@
   const ZOEK_KM = [15, 30, 50];
   let plaatsIndex = null;
   const PLAATS_ALIAS = { "den haag": "'s-gravenhage", "s-gravenhage": "'s-gravenhage", "den bosch": "'s-hertogenbosch", "s-hertogenbosch": "'s-hertogenbosch" };
+  // Scholen (index in SCHOLEN) waar de naam van de school of een vestiging bij past;
+  // niet als het een opleiding is ("techniek" is een opleiding, ook al heet een ROC-college zo)
+  function schoolZoek(t) {
+    const r = norm(t).trim();
+    if (r.length < 3 || heeftTreffer(r) || typeof SCHOLEN !== "object") return null;
+    const rw = r.split(/\s+/).map((w) => new RegExp("(^|[^a-z0-9])" + w.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
+    const past = (n) => rw.every((x) => x.test(norm(n)));
+    const sch = new Set();
+    SCHOLEN.forEach((s, i) => { if (past(s.n)) sch.add(i); });
+    Object.keys(SCHOOL_VAN).forEach((n) => { if (past(n)) sch.add(SCHOOL_VAN[n]); });
+    Object.keys(SCHOOL_PLEK).forEach((k) => { if (past(k.split("|")[0])) sch.add(SCHOOL_PLEK[k]); });
+    return sch.size ? sch : null;
+  }
+  // Bij welke scholen kun je deze opleiding volgen? (zelfde koppeling als de schoolpagina's)
+  const schoolCache = new Map();
+  function scholenVan(o) {
+    if (!schoolCache.has(o)) {
+      const s = new Set();
+      plekkenVan(o.n).forEach(([inst, pl]) => { const i = SCHOOL_PLEK[inst + "|" + pl] ?? SCHOOL_VAN[inst]; if (i !== undefined) s.add(i); });
+      if (!o.is) o.i.forEach((inst) => { if (SCHOOL_VAN[inst] !== undefined) s.add(SCHOOL_VAN[inst]); });
+      schoolCache.set(o, s);
+    }
+    return schoolCache.get(o);
+  }
   function plekSchoolZoek(q) {
     const uit = { plaats: null, scholen: null, rest: q };
     const ws = norm(q).trim().split(/\s+/).filter(Boolean);
@@ -310,19 +334,19 @@
       WP.forEach((w) => { if (!plaatsIndex.has(norm(w.naam))) plaatsIndex.set(norm(w.naam), w); });
     }
     const plaats = (t) => plaatsIndex.get(PLAATS_ALIAS[t] || t) || null;
+    // Een schoolnaam met een plaats erin ("roc van amsterdam", "hogeschool utrecht") is de school, niet de plaats
+    if (ws.length > 1 && !plaats(ws.join(" "))) {
+      const sch = schoolZoek(q);
+      if (sch) return { plaats: null, scholen: sch, rest: "" };
+    }
     for (let k = Math.min(3, ws.length); k >= 1 && !uit.plaats; k--) {
       for (const [deel, rest] of [[ws.slice(-k), ws.slice(0, -k)], [ws.slice(0, k), ws.slice(k)]]) {
         const p = plaats(deel.join(" "));
         if (p) { uit.plaats = p; uit.rest = rest.filter((w) => w !== "in").join(" "); break; }
       }
     }
-    // School alleen als de rest geen opleiding is ("techniek" is een opleiding, ook al heet een ROC-college zo)
-    const r = norm(uit.rest).trim();
-    if (r.length >= 3 && !heeftTreffer(r)) {
-      const rw = r.split(/\s+/).map((w) => new RegExp("(^|[^a-z0-9])" + w.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
-      const sch = new Set(OPLEIDINGEN.flatMap((o) => o.i).filter((i) => rw.every((x) => x.test(norm(i)))));
-      if (sch.size) { uit.scholen = sch; uit.rest = ""; }
-    }
+    const sch = schoolZoek(uit.rest);
+    if (sch) { uit.scholen = sch; uit.rest = ""; }
     return uit;
   }
 
@@ -350,7 +374,7 @@
         if (state.gebied && f.gebied !== state.gebied) return false;
         if (state.vorm && !(state.vorm === "werk" ? (o.v || []).some((v) => v === "deeltijd" || v === "duaal" || v === "inservice") : (o.v || []).includes(state.vorm))) return false;
         if (pz.plaats && !binnen(o, straal)) return false;
-        if (pz.scholen && !o.i.some((i) => pz.scholen.has(i))) return false;
+        if (pz.scholen && ![...scholenVan(o)].some((i) => pz.scholen.has(i))) return false;
         if (!varianten.length) return true;
         const sc = zoekScore(o, f, varianten);
         score.set(o, sc);
@@ -418,7 +442,12 @@
     if (state.zoek) addChip("Zoekterm: " + state.zoek, () => { state.zoek = ""; $("#zoek").value = ""; });
     if (nergensDichtbij) act.appendChild(el("p", { class: "niv-hint" }, `Niet binnen ${ZOEK_KM[ZOEK_KM.length - 1]} km van ${esc(nergensDichtbij)}. Je ziet hieronder alle plekken; vul bij een opleiding je woonplaats in voor de afstand.`));
     if (pz.plaats) act.appendChild(el("p", { class: "niv-hint" }, `Opleidingen binnen ${straal} km van ${esc(pz.plaats.naam)}${straal > ZOEK_KM[0] ? ` (dichterbij is er niets)` : ""}.`));
-    if (pz.scholen) act.appendChild(el("p", { class: "niv-hint" }, `Opleidingen van ${[...pz.scholen].slice(0, 3).map(esc).join(", ")}${pz.scholen.size > 3 ? ` en ${pz.scholen.size - 3} andere` : ""}.`));
+    if (pz.scholen) act.appendChild(el("p", { class: "niv-hint" }, pz.scholen.size > 3 ? `Opleidingen van ${pz.scholen.size} scholen. <a href="scholen/">Alle scholen op een rij</a>` : `Opleidingen van ${[...pz.scholen].map((i) => esc(SCHOLEN[i].n)).join(", ")}.`));
+    // Eén tot drie scholen gevonden: een tegel naar de pagina van de school
+    const st = $("#schoolTegels");
+    const tegels = pz.scholen && pz.scholen.size <= 3 ? [...pz.scholen] : [];
+    st.innerHTML = tegels.map((i) => `<a class="tegel s-naslag" href="scholen/${SCHOLEN[i].s}/">${icoonHtml("toelating")}<strong>${esc(SCHOLEN[i].n)}</strong><span>Alle opleidingen van deze school, waar hij zit en de open dagen</span></a>`).join("");
+    st.hidden = !tegels.length;
     if ($("#kaartKaart").firstChild) zoekOpKaart($("#kaartKaart"), perGebied);
     $("#alleLeeg").hidden = total > 0;
     $("#alleAantal").textContent = OPLEIDINGEN.length;
@@ -1304,6 +1333,13 @@
       history.replaceState(null, "", "#/opleidingen");
       h = "opleidingen";
       setTimeout(() => { const o = OPLEIDINGEN.find((x) => x.n === naam); if (o) openOpleiding(o, FAMILIES.find((f) => f.id === o.f)); });
+    }
+    // Vanaf een schoolpagina: #/zoek?q=ROC van Twente toont de opleidingen van die school
+    if (h.startsWith("zoek?")) {
+      state.zoek = $("#zoek").value = new URLSearchParams(h.slice(5)).get("q") || "";
+      state.fam = "";
+      renderList();
+      h = "alle";
     }
     if (h.startsWith("samen?")) {
       const q = new URLSearchParams(h.slice(6));
