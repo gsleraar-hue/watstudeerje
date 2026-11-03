@@ -893,6 +893,10 @@ ul.banen li{display:flex;justify-content:space-between;gap:10px;align-items:base
 .keuzestijlen li{margin:6px 0}
 .keuzestijlen .ks-tip{color:var(--muted)}
 .keuzestijlen .count{margin-top:8px}
+.parents .keuzestijlen{margin:12px 0 0;padding:16px 18px;border-radius:16px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);color:#fff}
+.parents .keuzestijlen h3{font-size:1.05rem;font-weight:700;margin:0 0 6px;color:#fff}
+.parents .keuzestijlen p,.parents .keuzestijlen li{font-size:.95rem;color:#ffeceb}
+.parents .keuzestijlen .ks-tip{color:#ffd7d1}
 .gk .gk-links{display:flex;flex-wrap:wrap;gap:4px 14px;margin:0;font-size:.9rem;font-weight:600}
 .gk .gk-links a{color:inherit}
 .plan-stappen .gk-links{display:flex;flex-wrap:wrap;gap:4px 14px;margin-top:6px;font-weight:600}
