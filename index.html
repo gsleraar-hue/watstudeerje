@@ -14,7 +14,7 @@
 <meta property="og:url" content="https://watstudeerje.nl/">
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebSite","name":"Wat studeer je eigenlijk?","url":"https://watstudeerje.nl/","inLanguage":"nl","description":"Onafhankelijke hulp bij studiekeuze in gewone taal: ruim 1.100 mbo-, hbo- en wo-opleidingen uitgelegd, Engelse studienamen vertaald, een persoonlijk stappenplan en uitleg van begrippen als LOB, BSA en numerus fixus."}</script>
 <script>try{var t=localStorage.getItem("thema");if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
-<link rel="stylesheet" href="ontwerp.css?v=133">
+<link rel="stylesheet" href="ontwerp.css?v=134">
 </head>
 <body>
 
@@ -87,11 +87,11 @@
     <p class="sub">Top. Dan sla je de Padvinder, de sterren en de metro gewoon over. Dit is de snelle route: zo zorg je dat je er ook echt komt.</p>
     <ol class="route">
       <li><span class="r-wanneer">Nu</span><strong>Zoek je opleiding op en zet hem op je lijst</strong><p>Typ de naam in het zoekveld bovenaan, open de opleiding en klik op “+ Zet op mijn lijst”. Dan rekent je stappenplan met jouw opleiding. <a href="#/opleidingen">Naar de opleidingen →</a></p></li>
-      <li><span class="r-wanneer">Nu</span><strong>Check of je erin mag</strong><p>Heb je de juiste vooropleiding, het juiste profiel en de vakken die nodig zijn? Vul je profiel in, dan zie je het bij elke opleiding meteen. <a href="#/profiel">Mijn profiel →</a></p></li>
-      <li><span class="r-wanneer">Nu</span><strong>Kijk of er selectie of loting is</strong><p>Dan meld je je al vóór 15 januari aan via Studielink, niet pas in mei. Wie dit mist, moet een jaar wachten. <a href="#toelating">Toelating uitgelegd →</a></p></li>
+      <li><span class="r-wanneer">Nu</span><strong>Check of je erin mag</strong><p>Heb je de juiste vooropleiding en de vakken die nodig zijn? Op het vmbo telt je leerweg: voor mbo 3 en 4 heb je de kader-, gemengde of theoretische leerweg nodig. Op havo en vwo telt je profiel. Vul je profiel in, dan zie je het bij elke opleiding meteen. <a href="#/profiel">Mijn profiel →</a></p></li>
+      <li><span class="r-wanneer">Nu</span><strong>Kijk of je er vroeg bij moet zijn</strong><p>Hbo of wo met selectie of loting? Dan meld je je al vóór 15 januari aan, niet pas in mei. Wie dit mist, moet een jaar wachten. Defensie en de politie hebben eigen data: daar schrijf je je soms al in het najaar in. <a href="#toelating">Toelating uitgelegd →</a> <a href="#opties">Defensie en politie →</a></p></li>
       <li><span class="r-wanneer">Vóór je je aanmeldt</span><strong>Kies je school: loop een dag mee</strong><p>Dezelfde opleiding is op elke school anders: meer praktijk, andere stad, andere sfeer. Een meeloopdag laat zien waar jij je thuis voelt. <a href="#/opendagen">Open dagen en meeloopdagen →</a></p></li>
-      <li><span class="r-wanneer">Vóór 1 mei (hbo en wo) of 1 april (mbo)</span><strong>Meld je aan</strong><p>Voor hbo en wo via Studielink, met DigiD. Voor het mbo bij de school zelf. Op tijd aangemeld betekent: in principe toegelaten als je aan de eisen voldoet.</p></li>
-      <li><span class="r-wanneer">Daarna</span><strong>Studiekeuzecheck, geld en eventueel een kamer</strong><p>Doe de studiekeuzecheck, regel studiefinanciering bij DUO en begin vroeg met kamers zoeken als je gaat verhuizen. <a href="#geld">Wie betaalt wat? →</a></p></li>
+      <li><span class="r-wanneer">Vóór 1 april (mbo) of 1 mei (hbo en wo)</span><strong>Meld je aan</strong><p>Voor het mbo meld je je aan op de website van de mbo-school zelf. Voor hbo en wo via Studielink, met DigiD. Op tijd aangemeld betekent: in principe toegelaten als je aan de eisen voldoet.</p></li>
+      <li><span class="r-wanneer">Daarna</span><strong>Intake of studiekeuzecheck, en de praktische dingen</strong><p>Op het mbo heb je een intakegesprek op school, en kies je bbl, dan zoek je een leerbedrijf. Op hbo en wo doe je de studiekeuzecheck. Regel daarna je studentenreisproduct en eventueel studiefinanciering bij DUO, en begin vroeg met kamers zoeken als je gaat verhuizen. <a href="#geld">Wie betaalt wat? →</a></p></li>
     </ol>
     <div class="planb-box">
       <h3>Eén ding nog, voor je doorrent</h3>
@@ -541,6 +541,12 @@
     <div class="gesprek ouderpaneel" data-paneel="lastig" hidden>
       <h3 class="gesprek-kop">Als het lastig wordt</h3>
       <div id="gesprekLastig" class="gesprek-grid twee"></div>
+      <div class="planb-box keuzestijlen">
+        <h3>Hoe kiezen jullie eigenlijk?</h3>
+        <p>Iedereen kiest op een eigen manier. Herken je jouw manier en die van je kind, dan snap je beter waarom jullie soms botsen. Er is geen goede of foute stijl, en de meeste mensen zijn een mix. Welke past bij jou? En welke bij je kind?</p>
+        <ul id="keuzestijlen"></ul>
+        <p class="count">De zeven keuzestijlen komen uit de krant <a href="https://www.yumpu.com/nl/document/read/19885816/kiezen-is-een-kunst-krant-cps/5" target="_blank" rel="noopener">Kiezen is een kunst ↗</a> van CPS, hier in eigen woorden.</p>
+      </div>
     </div>
     <div class="gesprek ouderpaneel" data-paneel="niets" id="lijktNiets" hidden>
       <h3 class="gesprek-kop">Mijn kind heeft iets bedacht, maar dat lijkt mij helemaal niets</h3>
@@ -558,8 +564,8 @@
     <div class="gesprek ouderpaneel" data-paneel="tips" hidden>
       <h3 class="gesprek-kop">Vijf tips</h3>
       <ul class="tips">
-      <li><strong>Vraag door op de naam.</strong> “Wat doe je dan op een gewone dinsdag?” brengt meer op dan “Is dat een goede studie?”</li>
-      <li><strong>Kijk naar wat je kind nu leuk vindt</strong>, niet naar wat een studie belooft. Waar verliest je kind de tijd bij?</li>
+      <li><strong>Vraag wat je kind er straks echt doet.</strong> Een studienaam zegt weinig. Zoek samen uit hoe een gewone week eruitziet: welke vakken, hoeveel uur les en wanneer de stage is. Dat zegt meer dan “Is dat een goede studie?”</li>
+      <li><strong>Begin bij wat je kind nu al graag doet</strong>, niet bij wat een studie belooft, zoals een goede baan of veel geld. Waar is je kind uren mee bezig zonder op de klok te kijken? Daar zit vaak een richting in.</li>
       <li><strong>Laat het proefstuderen.</strong> Bijna elke opleiding heeft meeloopdagen, open dagen en proefstudeerdagen. Eén dag zegt meer dan tien websites.</li>
       <li><strong>Een verkeerde keuze is niet erg.</strong> Wisselen of doorstromen kan vaak, en je leert er veel van.</li>
       <li><strong>Praat over werk, niet alleen over de studie.</strong> Welke mensen in jullie omgeving doen iets wat leuk lijkt? Vraag of je kind met ze mag praten.</li>
@@ -585,16 +591,16 @@
   </div>
 </footer>
 
-<script src="data.js?v=133"></script>
-<script src="opleidingen.js?v=133"></script>
-<script src="uitleg.js?v=133"></script>
-<script src="mbo.js?v=133"></script>
-<script src="zorg-inservice.js?v=133"></script>
-<script src="locaties.js?v=133"></script>
-<script src="opendagen.js?v=133"></script>
-<script src="scholen.js?v=133"></script>
-<script src="links.js?v=133"></script>
-<script src="opl-info.js?v=133"></script>
-<script src="app.js?v=133"></script>
+<script src="data.js?v=134"></script>
+<script src="opleidingen.js?v=134"></script>
+<script src="uitleg.js?v=134"></script>
+<script src="mbo.js?v=134"></script>
+<script src="zorg-inservice.js?v=134"></script>
+<script src="locaties.js?v=134"></script>
+<script src="opendagen.js?v=134"></script>
+<script src="scholen.js?v=134"></script>
+<script src="links.js?v=134"></script>
+<script src="opl-info.js?v=134"></script>
+<script src="app.js?v=134"></script>
 </body>
 </html>

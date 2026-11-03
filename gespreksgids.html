@@ -50,8 +50,8 @@
 
   <h2>Vijf tips</h2>
   <ul class="tips">
-    <li><strong>Vraag door op de naam.</strong> “Wat doe je dan op een gewone dinsdag?” zegt meer dan “Is dat een goede studie?”</li>
-    <li><strong>Kijk naar wat je kind nu leuk vindt</strong>, niet naar wat een studie belooft.</li>
+    <li><strong>Vraag wat je kind er straks echt doet.</strong> Welke vakken, hoeveel uur les, wanneer de stage? Dat zegt meer dan “Is dat een goede studie?”</li>
+    <li><strong>Begin bij wat je kind nu al graag doet</strong>, niet bij wat een studie belooft. Waar is het uren mee bezig?</li>
     <li><strong>Laat het proefstuderen.</strong> Eén meeloopdag zegt meer dan tien websites.</li>
     <li><strong>Een verkeerde keuze is niet erg.</strong> Overstappen of doorstromen kan vaak.</li>
     <li><strong>Praat over werk, niet alleen over de studie.</strong> Wie in jullie omgeving doet iets wat leuk lijkt?</li>
@@ -67,7 +67,14 @@
   const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
   document.getElementById("stappen").innerHTML = GESPREK.map((g) =>
     `<div class="stap"><h3>${esc(g[0])}</h3><p>${esc(g[1])}</p><span class="label">Vraag bijvoorbeeld</span><ul>${g[2].map((v) => `<li>${esc(v)}</li>`).join("")}</ul><span class="label">Liever niet</span><ul class="niet">${g[3].map((v) => `<li>${esc(v)}</li>`).join("")}</ul></div>`).join("");
-  document.getElementById("lastig").innerHTML = GESPREK_LASTIG.map((g) => `<div><h3>${esc(g[0])}</h3><p>${esc(g[1])}</p></div>`).join("");
+  // Kortere versie van GESPREK_LASTIG (uitleg.js), zodat de gids op één A4 past. Pas bij een wijziging daar ook dit aan.
+  const LASTIG_KORT = [
+    ["Als je kind het echt niet weet", "Heel normaal, ook op 17. Begin bij de decaan. Zoek samen uit wat je kind in elk geval níét wil: dan vallen veel opties af. Iets breeds kiezen kan ook demotiveren. Een verkeerde keuze na goed uitzoeken is niet erg: overstappen kan."],
+    ["Als jullie het oneens zijn", "Vaak botsen jullie manieren van kiezen: op gevoel of juist met lijstjes. Geen van beide is fout. Vraag waaróm je kind iets wil en zoek het samen uit. Jouw zorg mag je noemen, maar het blijft de keuze van je kind."],
+    ["Als het over geld gaat", "Collegegeld, boeken en misschien een kamer. Via DUO krijgt je kind een basisbeurs en/of kan het lenen. Wat het in totaal per maand kost, zie je bij het Nibud en op watkoststuderen.nl."],
+    ["Als jullie er samen niet uitkomen", "Praat samen met de decaan. Die stelt net andere vragen, ziet sneller verbanden met andere opleidingen, kijkt zonder eigen belang mee en het kost niets."]
+  ];
+  document.getElementById("lastig").innerHTML = LASTIG_KORT.map((g) => `<div><h3>${esc(g[0])}</h3><p>${esc(g[1])}</p></div>`).join("");
   document.getElementById("url").textContent = "watstudeerje.nl";
 </script>
 </body>

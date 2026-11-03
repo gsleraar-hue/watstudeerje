@@ -65,8 +65,11 @@
   // In de Padvinder: zit je op het vmbo, dan zie je mbo-studenten
   const personaLijst = (k) => (schoolSoort() === "vmbo" ? PERSONAS_MBO[k] : PERSONAS[k]) || [];
 
+  // De opleiding van een voorbeeldstudent: klik je erop, dan open je die opleiding
+  const personaStudie = (p) => p.opl && OPLEIDINGEN.some((o) => o.n === p.opl)
+    ? `<button type="button" class="linkbtn" data-oplnaam="${esc(p.opl)}">${esc(p.studie)}</button>` : esc(p.studie);
   function personaHtml(k, niveaus) {
-    return personaKop(k) + `<div class="personas">${personasVoor(k, niveaus).map((p) => `<div class="persona"><strong>${esc(p.naam)}</strong><span>${esc(p.studie)}</span><p>${vt(p.tekst)}</p></div>`).join("")}</div>`;
+    return personaKop(k) + `<div class="personas">${personasVoor(k, niveaus).map((p) => `<div class="persona"><strong>${esc(p.naam)}</strong><span>${personaStudie(p)}</span><p>${vt(p.tekst)}</p></div>`).join("")}</div>`;
   }
   // Afwijkende toelatingseisen: eerst op naam (zeker), anders op groep (misschien)
   function extraEis(o, famId) {
@@ -408,6 +411,7 @@
           { type: "button", class: "oplbtn" },
           `<span class="on">${esc(o.n)}</span>` +
             (o.e ? `<span class="oe">${esc(o.e)}</span>` : "") +
+            (OPL_INFO[o.n] ? `<span class="ou">${esc(OPL_INFO[o.n].u.split(/(?<=\.) /)[0])}</span>` : "") +
             `<span class="badges">${o.l.map((n) => `<span class="badge ${n}">${NIV_LABEL[n]}</span>`).join("")}${(extraEis(o, f.id) || {}).zeker ? `<span class="pf-info pf-extra" title="Extra toelatingseisen" aria-label="extra toelatingseisen">!</span>` : ""}${profielTeken(o, f.id)}</span>`
         );
         b.addEventListener("click", () => openOpleiding(o, f));
@@ -514,6 +518,7 @@
       `<div class="badges">${o.l.map((n) => `<span class="badge ${n}">${NIV_LABEL[n]}</span>`).join("")}<span class="badge gebied">${esc(f.naam)}</span></div>` +
       `<h2 id="dTitel">${esc(o.n)}</h2>${naamRegels(o.n, o.e, "Internationale naam")}` +
       (extra ? `<div class="attentie${extra.zeker ? "" : " zacht"}"><p><strong>${extra.zeker ? "Let op: extra toelatingseisen" : "Misschien extra toelatingseisen"}</strong></p><p>${esc(extra.tekst)} ${extra.zeker ? "" : "Check of dat voor deze opleiding geldt. "}De precieze eisen en data staan op de website van de opleiding. <a href="#toelating">Hoe werkt selectie?</a></p></div>` : "") +
+      (/^Aankomend .*(grondoptreden|maritiem)$/.test(o.n) ? `<div class="attentie zacht"><p><strong>Dit is een VEVA-opleiding</strong></p><p>VEVA (Veiligheid & Vakmanschap) is een mbo-opleiding met militaire vakken, veel sport en elke maand stage bij Defensie. Je meldt je aan bij het ROC, net als bij andere mbo-opleidingen. Je hebt een vmbo-diploma, een sportmedische keuring en een VOG nodig, en je bent minstens 16 op 1 januari van je eerste schooljaar. Er zijn ook VEVA-richtingen in zorg, techniek, ICT, logistiek en beveiliging. <a href="https://veva.nl" target="_blank" rel="noopener">veva.nl ↗</a></p></div>` : "") +
       (bekender ? `<p class="praat">Zoek je <a href="#/opleidingen" data-oplnaam="${esc(bekender.n)}">${esc(bekender.n)}</a>? Die opleiding bestaat ook los, bij ${bekender.i.length} ${bekender.i.length === 1 ? "school" : "scholen"}.</p>` : "") +
       (o.nw ? `<div class="attentie zacht"><p><strong>Nieuwe opleiding vanaf schooljaar ${esc(o.nw.jaar)}</strong></p><p>Nu ${o.i.length === 1 ? "is er nog maar één school" : `zijn er nog maar ${o.i.length} scholen`} die deze opleiding aanbiedt. Meer scholen volgen waarschijnlijk. Tot die tijd lijkt deze opleiding op ${o.nw.lijkt.map((n) => { const x = OPLEIDINGEN_MBO.find((y) => y.n === n); return `<a href="#/opleidingen" data-oplnaam="${esc(n)}">${esc(n)}</a>${x ? ` (${x.i.length} scholen)` : ""}`; }).join(" en ")}.</p></div>` : "") +
       `<p><button type="button" class="btn ${isFav(o.n) ? "" : "ghost"} favknop" data-fav="${esc(o.n)}">${isFav(o.n) ? "✓ Op mijn lijst" : "+ Zet op mijn lijst"}</button> <a class="deel-link" href="opleidingen/${oplSlug.get(o.n)}/" target="_blank" rel="noopener">Vaste pagina om te delen ↗</a></p>` +
@@ -531,6 +536,12 @@
           `<li>Het helpt als je ${alsJe(X.eigen)}.</li></ul><p class="praat" style="margin-top:8px">Toelatingseisen verschillen per school. Lees ze altijd bij de opleiding zelf.</p>`
         : "") +
       profielCheck(o, f.id) +
+      `<h3>Waar kan het? (${alleI.length} ${Z ? "ziekenhuizen" : alleI.length === 1 ? "school" : "scholen"})</h3>${reis}` +
+      (voor.length ? `<p>${o.i.length === 1 ? "Eén school biedt" : `${o.i.length} scholen bieden`} deze nieuwe opleiding al aan. De andere scholen hieronder geven nu ${voor.map((x) => esc(x.n)).join(" of ")} en stappen vanaf ${esc(o.nw.jaar)} waarschijnlijk over. Vraag het na bij de school.</p>` : "") +
+      `<ul class="scholen">${insts.map(schoolLi).join("")}</ul>` +
+      (Z ? `<p>Veel meer ziekenhuizen leiden op. Kijk ook bij het ziekenhuis bij jou in de buurt.</p>` : "") +
+      (particulier.length ? `<div class="attentie"><p><strong>Let op: ${particulier.length === 1 ? "particuliere school" : "particuliere scholen"}</strong></p><p>${particulier.map(esc).join(", ")} ${particulier.length === 1 ? "krijgt" : "krijgen"} geen geld van de overheid. Je betaalt daar een veel hoger ${M ? "lesgeld" : "collegegeld"}, vaak vele malen het gewone bedrag. Particuliere opleidingen zijn meestal bedoeld voor volwassenen die naast hun werk leren. Kom je van de middelbare school, kijk dan eerst bij de andere scholen.</p></div>` : "") +
+      (alleI.length > insts.length ? `<p style="color:var(--muted)">en ${alleI.length - insts.length} andere</p>` : "") +
       (Z ? `<h3>Toelatingsexamen, auditie of selectie?</h3><p>Ja: je solliciteert bij een ziekenhuis op een vacature voor "${esc(o.n.toLowerCase())} in opleiding". Er zijn per ziekenhuis maar een paar plekken, dus vaak volgt een gesprek en soms een meeloopdag.</p>` : "") +
       (Z ? "" : `<h3>Toelatingsexamen, auditie of selectie?</h3><p>${SELECTIE[f.id] ? esc(SELECTIE[f.id]) + " Kijk bij de opleiding zelf wat er precies gevraagd wordt." : M ? "Meestal niet. Meld je je vóór 1 april aan en heb je de juiste vooropleiding, dan moet de school je toelaten. Wel heb je eerst een intakegesprek." : "Meestal niet. Heb je de juiste vooropleiding en meld je je op tijd aan, dan mag je in principe beginnen."}</p>`) +
       `<div class="planb-box"><h3>Plan B: wat als je niet wordt aangenomen?</h3><ul>` +
@@ -542,18 +553,12 @@
       (o.l.includes("hbo") ? "<li>Via mbo 4: daarna kun je alsnog naar het hbo.</li>" : "") +
       `<li>Volgend jaar opnieuw proberen.</li></ul><p><a href="#planb">Lees alles over Plan B →</a></p></div>`) +
       (Z ? `<h3>Hoe kom je daar?</h3><ol class="stapjes"><li>Haal je havo-, vwo- of mbo 4-diploma.</li><li>Loop een dagje mee op de OK van een ziekenhuis.</li><li>Zoek vacatures voor "${esc(o.n.toLowerCase())} in opleiding" op de werkenbij-sites van ziekenhuizen. Ze openen vaak een paar keer per jaar.</li><li>Solliciteer met een brief en je cv.</li><li>Aangenomen? Dan teken je een leerwerkovereenkomst en krijg je meteen salaris. Je meldt je niet aan via Studielink.</li></ol>` : "") +
-      (M ? `<h3>Hoe kom je daar?</h3><ol class="stapjes"><li>Haal je vmbo-diploma${o.mn && o.mn.length ? `: voor niveau ${o.mn.join(" of ")} ${Math.min(...o.mn) >= 3 ? "met de kader-, gemengde of theoretische leerweg" : "kan dat in elke leerweg"}` : ""}.</li><li>Ga naar een open dag of loop een dag mee op de mbo-school.</li><li>Meld je aan via de website van de mbo-school zelf, niet via Studielink. Doe dat vóór 1 april. Bewaar de bevestiging: je mentor of decaan vraagt soms om een kopie.</li><li>Ga naar het intakegesprek: een kennismaking, geen examen.</li>${(o.v || []).includes("bbl") ? "<li>Kies je bbl? Dan zoek je zelf een leerbedrijf met een leerbaan. Dat kan op <a href=\"https://leerbanenmarkt.nl\" target=\"_blank\" rel=\"noopener\">leerbanenmarkt.nl</a>. Sommige scholen helpen, maar reken daar niet op.</li>" : ""}<li>Vraag bij DUO je studentenreisproduct aan.</li></ol><p><a href="#/plan">Maak je eigen stappenplan →</a></p>` : "") +
+      (M ? `<h3>Hoe kom je daar?</h3><ol class="stapjes"><li>Haal je vmbo-diploma${o.mn && o.mn.length ? `: voor niveau ${o.mn.join(" of ")} ${Math.min(...o.mn) >= 3 ? "met de kader-, gemengde of theoretische leerweg" : "kan dat in elke leerweg"}` : ""}.</li><li>Ga naar een open dag of loop een dag mee op de mbo-school.</li><li>Meld je vóór 1 april aan via de website van de mbo-school zelf. Bewaar de bevestiging: je mentor of decaan vraagt soms om een kopie.</li><li>Ga naar het intakegesprek: een kennismaking, geen examen.</li>${(o.v || []).includes("bbl") ? "<li>Kies je bbl? Dan zoek je zelf een leerbedrijf met een leerbaan. Dat kan op <a href=\"https://leerbanenmarkt.nl\" target=\"_blank\" rel=\"noopener\">leerbanenmarkt.nl</a>. Sommige scholen helpen, maar reken daar niet op.</li>" : ""}<li>Vraag bij DUO je studentenreisproduct aan.</li></ol><p><a href="#/plan">Maak je eigen stappenplan →</a></p>` : "") +
       (Z || M ? "" : `<h3>Hoe kom je daar?</h3><ol class="stapjes"><li>Zorg voor de juiste vooropleiding en het juiste profiel.</li><li>Ga naar een open dag of meeloopdag.</li><li>Meld je aan via Studielink: uiterlijk 1 mei${SELECTIE[f.id] ? ", bij selectie of loting vaak al vóór 15 januari" : ""}.</li><li>Doe de studiekeuzecheck.</li><li>Regel je geld bij DUO, en eventueel een kamer.</li></ol><p><a href="#route">Bekijk het hele stappenplan →</a></p>`) +
       personaHtml(f.gebied, o.l) +
       `<h3>Hoe lang?</h3><p>${Z ? esc(o.duur) : o.l.map((n) => `${NIV_LABEL[n]}${n === "mbo" && o.mn && o.mn.length ? " niveau " + o.mn.join(", ") : ""}: ${EC_JAAR[n]}`).join(" · ")}</p>` +
       ((o.v || []).length ? `<h3>Hoe kun je hem volgen?</h3><p>${o.v.map((v) => VORM_LANG[v] || v).join(", ")}.${o.v.some((v) => v === "bol" || v === "bbl") ? ` <a href="#leerwerk">Bol of bbl: wat past bij jou? →</a>` : o.v.some((v) => v === "deeltijd" || v === "duaal") ? ` <a href="#leerwerk">Werken en leren: hoe zit dat? →</a>` : ""}</p>` : "") +
       `<h3>Hoe studeer je?</h3><p>${o.v.map((v) => VORM[v] || v).join(", ") || "onbekend"}</p>` +
-      `<h3>Waar kan het? (${alleI.length} ${Z ? "ziekenhuizen" : alleI.length === 1 ? "school" : "scholen"})</h3>${reis}` +
-      (voor.length ? `<p>${o.i.length === 1 ? "Eén school biedt" : `${o.i.length} scholen bieden`} deze nieuwe opleiding al aan. De andere scholen hieronder geven nu ${voor.map((x) => esc(x.n)).join(" of ")} en stappen vanaf ${esc(o.nw.jaar)} waarschijnlijk over. Vraag het na bij de school.</p>` : "") +
-      `<ul class="scholen">${insts.map(schoolLi).join("")}</ul>` +
-      (Z ? `<p>Veel meer ziekenhuizen leiden op. Kijk ook bij het ziekenhuis bij jou in de buurt.</p>` : "") +
-      (particulier.length ? `<div class="attentie"><p><strong>Let op: ${particulier.length === 1 ? "particuliere school" : "particuliere scholen"}</strong></p><p>${particulier.map(esc).join(", ")} ${particulier.length === 1 ? "krijgt" : "krijgen"} geen geld van de overheid. Je betaalt daar een veel hoger ${M ? "lesgeld" : "collegegeld"}, vaak vele malen het gewone bedrag. Particuliere opleidingen zijn meestal bedoeld voor volwassenen die naast hun werk leren. Kom je van de middelbare school, kijk dan eerst bij de andere scholen.</p></div>` : "") +
-      (alleI.length > insts.length ? `<p style="color:var(--muted)">en ${alleI.length - insts.length} andere</p>` : "") +
       `<p class="praat" style="margin-top:16px">Namen kunnen misleiden. Vergelijk altijd het programma van twee scholen en lees de toelatingseisen op de website van de opleiding zelf.</p>`;
     const d = $("#detail");
     if (d.showModal) d.showModal();
@@ -946,12 +951,12 @@
       const knoppen = (eigen.length ? eigen : FAMILIES.filter((f) => f.gebied === k).map((f) => f.id)).slice(0, 3);
       return `<article class="richting"><div class="r-kop"><span class="res-ic">${icon(k, 40)}</span><div><small>Richting ${i + 1} · ${pct(k)}%</small><h4>${esc(g.naam)}</h4></div></div>` +
         `<p class="r-uitleg">${vt(g.uitleg)}</p>` +
-        (p ? `<figure class="persona-groot"><blockquote>${vt(p.tekst)}</blockquote><figcaption><strong>${esc(p.naam)}</strong> · ${esc(p.studie)} <small>(voorbeeld)</small></figcaption></figure>` : "") +
+        (p ? `<figure class="persona-groot"><blockquote>${vt(p.tekst)}</blockquote><figcaption><strong>${esc(p.naam)}</strong> · ${personaStudie(p)} <small>(voorbeeld)</small></figcaption></figure>` : "") +
         `<p class="r-sub"><strong>Wat kun je ermee?</strong> ${g.kunJe.slice(0, 2).map(vt).join(" · ")}</p>` +
         `<div class="mini">${knoppen.map((f) => `<button type="button" data-fam="${f}">${famNaam(f)}</button>`).join("")}</div>` +
         `<details class="meer"><summary>Meer over ${esc(g.naam)}</summary>` +
         `<h5>Wat de opleidingen gemeen hebben</h5><ul>${g.gemeen.map((t) => `<li>${vt(t)}</li>`).join("")}</ul>` +
-        (p2 ? `<h5>Nog een student</h5><p><strong>${esc(p2.naam)}</strong>, ${esc(p2.studie)}: ${vt(p2.tekst)}</p>` : "") +
+        (p2 ? `<h5>Nog een student</h5><p><strong>${esc(p2.naam)}</strong>, ${personaStudie(p2)}: ${vt(p2.tekst)}</p>` : "") +
         `<h5>Studies uitgelegd</h5><div class="mini">${STUDIES.filter((s) => s.gebied === k).map((s) => `<button type="button" data-id="${s.id}">${esc(s.naam)}</button>`).join("")}</div>` +
         `<h5>Om over te praten</h5><ul>${g.praat.map((t) => `<li>${vt(t)}</li>`).join("")}</ul></details></article>`;
     }).join("") + `</div>`;
@@ -1490,8 +1495,10 @@
   });
 
   /* ---------- Gespreksgids ouders ---------- */
+  const linksHtml = (l) => (l && l.length ? `<span class="gk-links">${l.map(([t, u]) => `<a href="${esc(u)}" target="_blank" rel="noopener">${esc(t)} ↗</a>`).join("")}</span>` : "");
   $("#gesprekLijst").innerHTML = GESPREK.map((g) => `<div class="gk"><h4>${esc(g[0])}</h4><p>${vt(g[1])}</p><strong>Vraag bijvoorbeeld</strong><ul>${g[2].map((v) => `<li>${esc(v)}</li>`).join("")}</ul><strong>Liever niet</strong><ul class="niet">${g[3].map((v) => `<li>${esc(v)}</li>`).join("")}</ul></div>`).join("");
-  $("#gesprekLastig").innerHTML = GESPREK_LASTIG.map((g) => `<div class="gk"><h4>${esc(g[0])}</h4><p>${vt(g[1])}</p></div>`).join("");
+  $("#gesprekLastig").innerHTML = GESPREK_LASTIG.map((g) => `<div class="gk"><h4>${esc(g[0])}</h4><p>${vt(g[1])}</p>${linksHtml(g[2])}</div>`).join("");
+  $("#keuzestijlen").innerHTML = KEUZESTIJLEN.map(([n, hoe, tip]) => `<li><strong>${esc(n)}.</strong> ${esc(hoe)} <span class="ks-tip">Tip: ${esc(tip)}</span></li>`).join("");
 
   $("#odTips").innerHTML = OPENDAG_TIPS.map((t) => `<div class="odtip"><h4>${esc(t[0])}</h4><ul>${t[1].map((p) => `<li>${vt(p)}</li>`).join("")}</ul></div>`).join("");
 
@@ -1560,7 +1567,7 @@
     if (selectie.length && !mboRoute) st.push({ id: "fixus", wanneer: `Vóór 15 januari ${sj}`, titel: "Aanmelden voor opleidingen met selectie of loting", tekst: selectie.map((f) => `<strong>${esc(FAMILIES.find((x) => x.id === f).naam)}</strong>: ${esc(SELECTIE[f])}`).join("<br>") + "<br>Check bij de opleiding de precieze datum en wat je moet inleveren.", datum: new Date(sj, 0, 15) });
     st.push({ id: "digid", wanneer: "Ruim op tijd", titel: "Vraag een DigiD aan", tekst: mboRoute ? "Die heb je nodig voor DUO, bijvoorbeeld voor je studentenreisproduct. Aanvragen kost een paar dagen, want je krijgt een brief met een code." : "Die heb je nodig voor Studielink en DUO. Aanvragen kost een paar dagen, want je krijgt een brief met een code." });
     if (mboRoute) st.push({ id: "leerwerk", wanneer: "Vóór je je aanmeldt", titel: "Kies: vooral leren (bol) of vooral werken (bbl)?", tekst: "Veel mbo-opleidingen kun je op twee manieren volgen, met hetzelfde diploma. Bij bol ga je vooral naar school, bij bbl werk je bij een leerbedrijf en ga je één dag naar school. Kies je bbl? Zoek dan op tijd een leerbedrijf: dat doe je meestal zelf, bijvoorbeeld via <a href='https://leerbanenmarkt.nl' target='_blank' rel='noopener'>leerbanenmarkt.nl</a> of <a href='https://www.stagemarkt.nl' target='_blank' rel='noopener'>stagemarkt.nl</a>. <a href='#leerwerk'>Wat past bij jou? →</a>" });
-    if (mboRoute) st.push({ id: "aanmelden", wanneer: `Vóór 1 april ${sj}`, titel: "Aanmelding: bij de mbo-school", tekst: "Je meldt je aan via de website van de mbo-school zelf, niet via Studielink. Doe je dat vóór 1 april, dan heb je toelatingsrecht: de school moet je dan toelaten als je aan de vooropleidingseisen voldoet. Je mag je bij meer opleidingen aanmelden. Bewaar de bevestiging: je mentor of decaan vraagt soms om een kopie.", datum: new Date(sj, 3, 1) });
+    if (mboRoute) st.push({ id: "aanmelden", wanneer: `Vóór 1 april ${sj}`, titel: "Aanmelding: bij de mbo-school", tekst: "Je meldt je aan via de website van de mbo-school zelf. Doe je dat vóór 1 april, dan heb je toelatingsrecht: de school moet je dan toelaten als je aan de vooropleidingseisen voldoet. Je mag je bij meer opleidingen aanmelden. Bewaar de bevestiging: je mentor of decaan vraagt soms om een kopie.", datum: new Date(sj, 3, 1) });
     else st.push({ id: "aanmelden", wanneer: `Vóór 1 mei ${sj}`, titel: "Aanmelding: via Studielink", tekst: "Dan heb je recht op een studiekeuzecheck en word je in principe toegelaten als je aan de eisen voldoet. Je mag je voor meer opleidingen aanmelden.", datum: new Date(sj, 4, 1) });
     if (!mboRoute) st.push({ id: "toelating", wanneer: `Voorjaar ${sj}`, titel: "Toelating: word je toegelaten?", tekst: (selectie.length ? `Voor je lijst geldt: ${selectie.map((f) => `<strong>${esc(FAMILIES.find((x) => x.id === f).naam)}</strong>: ${esc(SELECTIE[f])}`).join(" ")}<br>` : "Voor de opleidingen op je lijst geldt meestal: juiste vooropleiding en op tijd aangemeld, dan mag je beginnen.<br>") + `Andere vormen: loting, portfolio, auditie, aanvullende eisen. <a href="#toelating">Lees wat die betekenen →</a>` });
     st.push({ id: "planb", wanneer: mboRoute ? `Vóór 1 april ${sj}` : `Vóór 1 mei ${sj}`, titel: "Zet een Plan B klaar", tekst: (selectie.length && !mboRoute ? `Voor ${selectie.map((f) => `<strong>${esc(FAMILIES.find((x) => x.id === f).naam)}</strong>`).join(" en ")} is er vaak selectie of loting. Zet ook een opleiding zonder selectie op je lijst en meld je daar ook voor aan.` : "Meld je voor meer dan één opleiding aan, dan heb je altijd iets achter de hand.") + ` <a href="#planb">Wat als je niet wordt aangenomen? →</a>` });
@@ -1577,8 +1584,8 @@
     }
     if (lees("optie_buitenland", false)) st.push({ id: "buitenland", wanneer: `Uiterlijk winter ${sj - 1}`, titel: "Studeren in het buitenland voorbereiden", tekst: vt(OPTIES[0][1]) });
     if (lees("optie_tussenjaar", false)) st.push({ id: "tussenjaar", wanneer: "Voor je eindexamen", titel: "Tussenjaar plannen", tekst: vt(OPTIES[1][1]) });
-    if (lees("optie_defensie", false)) st.push({ id: "defensie", wanneer: `Uiterlijk najaar ${sj - 1}`, titel: "Solliciteren bij Defensie", tekst: vt(OPTIES[2][1]) + " Begin dus ruim een half jaar voor je wilt starten, en meld je voor de zekerheid ook bij een gewone opleiding aan." });
-    if (lees("optie_politie", false)) st.push({ id: "politie", wanneer: `Uiterlijk najaar ${sj - 1}`, titel: "Solliciteren bij de politie", tekst: vt(OPTIES[3][1]) + " Begin dus ruim een half jaar voor je wilt starten, en meld je voor de zekerheid ook bij een gewone opleiding aan." });
+    if (lees("optie_defensie", false)) st.push({ id: "defensie", wanneer: `Uiterlijk najaar ${sj - 1}`, titel: "Solliciteren bij Defensie", tekst: vt(OPTIES[2][1]) + " Begin dus ruim een half jaar voor je wilt starten, en meld je voor de zekerheid ook bij een gewone opleiding aan." + linksHtml(OPTIES[2][2]) });
+    if (lees("optie_politie", false)) st.push({ id: "politie", wanneer: `Uiterlijk najaar ${sj - 1}`, titel: "Solliciteren bij de politie", tekst: vt(OPTIES[3][1]) + " Kijk dus nu al wanneer jouw regio opengaat, en meld je voor de zekerheid ook bij een gewone opleiding aan." + linksHtml(OPTIES[3][2]) });
     st.push({ id: "zorg", wanneer: "Zodra je 18 wordt", titel: "Zorgverzekering en zorgtoeslag", tekst: "Vanaf je 18e moet je zelf een zorgverzekering hebben. Met een laag inkomen kun je zorgtoeslag krijgen." });
     st.push({ id: "start", wanneer: `September ${sj}`, titel: "Je eerste studiedag", tekst: "De introductieweek helpt je je weg te vinden. Vragen? Elke opleiding heeft studieadviseurs bij wie je terechtkunt.", datum: new Date(sj, 8, 1) });
     return st;
@@ -1648,7 +1655,7 @@
   });
 
   /* ---------- Toelating, geld, kamers, opties ---------- */
-  const kaartjes = (lijst) => lijst.map((x) => `<div class="gk licht"><h4>${esc(x[0])}</h4><p>${vt(x[1])}</p></div>`).join("");
+  const kaartjes = (lijst) => lijst.map((x) => `<div class="gk licht"><h4>${esc(x[0])}</h4><p>${vt(x[1])}</p>${linksHtml(x[2])}</div>`).join("");
   $("#toelatingLijst").innerHTML = kaartjes(TOELATING);
   $("#geldLijst").innerHTML = kaartjes(GELD);
   $("#optiesLijst").innerHTML = kaartjes(OPTIES);

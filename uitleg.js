@@ -487,56 +487,56 @@ const BEROEP_TERM = {"Onderwijskundige of schoolleider": "onderwijs", "Schoollei
 // Persona's: verzonnen voorbeelden van studenten, om je in te herkennen (of juist niet)
 const PERSONAS = {
   tech: [
-    { naam: "Daan, 19", studie: "hbo Informatica", tekst: "Gamede veel en begon zelf kleine programma's te maken. Puzzelt door tot iets werkt en werkt het liefst met een paar mensen aan één project." },
-    { naam: "Noor, 18", studie: "wo Werktuigbouwkunde", tekst: "Vond wiskunde prima, maar het bouwen van een zeepkist het leukst. Wil later meewerken aan duurzame energie." }
+    { naam: "Daan, 19", studie: "hbo Informatica", opl: "Informatica", tekst: "Gamede veel en begon zelf kleine programma's te maken. Puzzelt door tot iets werkt en werkt het liefst met een paar mensen aan één project." },
+    { naam: "Noor, 18", studie: "wo Werktuigbouwkunde", opl: "Werktuigbouwkunde", tekst: "Vond wiskunde prima, maar het bouwen van een zeepkist het leukst. Wil later meewerken aan duurzame energie." }
   ],
   zorg: [
-    { naam: "Lisa, 18", studie: "hbo Verpleegkunde", tekst: "Werkte als bijbaan in een verpleeghuis en merkte dat ze rustig blijft als het spannend wordt. Houdt van afwisseling en van mensen." },
-    { naam: "Youssef, 19", studie: "hbo Fysiotherapie", tekst: "Voetbalt al jaren en kwam zelf bij de fysio na een blessure. Snapt graag hoe het lichaam werkt en coacht nu de jeugd." }
+    { naam: "Lisa, 18", studie: "hbo Verpleegkunde", opl: "Verpleegkunde", tekst: "Werkte als bijbaan in een verpleeghuis en merkte dat ze rustig blijft als het spannend wordt. Houdt van afwisseling en van mensen." },
+    { naam: "Youssef, 19", studie: "hbo Fysiotherapie", opl: "Opleiding tot Fysiotherapeut", tekst: "Voetbalt al jaren en kwam zelf bij de fysio na een blessure. Snapt graag hoe het lichaam werkt en coacht nu de jeugd." }
   ],
   weten: [
-    { naam: "Emma, 18", studie: "wo Biomedische wetenschappen", tekst: "Wil van alles weten waarom het zo werkt. Vindt het niet erg om lang aan één vraag te werken en houdt van precies werk." },
-    { naam: "Bram, 19", studie: "hbo Bos- en natuurbeheer", tekst: "Zit het liefst buiten, kent alle vogels in de buurt en wil iets doen aan natuur en klimaat." }
+    { naam: "Emma, 18", studie: "wo Biomedische wetenschappen", opl: "Biomedische Wetenschappen", tekst: "Wil van alles weten waarom het zo werkt. Vindt het niet erg om lang aan één vraag te werken en houdt van precies werk." },
+    { naam: "Bram, 19", studie: "hbo Bos- en natuurbeheer", opl: "Bos- en Natuurbeheer", tekst: "Zit het liefst buiten, kent alle vogels in de buurt en wil iets doen aan natuur en klimaat." }
   ],
   creatief: [
-    { naam: "Sara, 18", studie: "hbo Communicatie & multimediaontwerp", tekst: "Maakt al jaren eigen video's en ontwerpen. Kan goed tegen kritiek en wil dingen maken waar mensen iets mee doen." },
-    { naam: "Milan, 20", studie: "hbo Conservatorium", tekst: "Speelt sinds zijn achtste gitaar en oefent elke dag. Weet dat het een harde wereld is, maar kan zich niets anders voorstellen." }
+    { naam: "Sara, 18", studie: "hbo Communicatie & multimediaontwerp", opl: "Communication and Multimedia Design", tekst: "Maakt al jaren eigen video's en ontwerpen. Kan goed tegen kritiek en wil dingen maken waar mensen iets mee doen." },
+    { naam: "Milan, 20", studie: "hbo Conservatorium (muziek)", opl: "Muziek", tekst: "Speelt sinds zijn achtste gitaar en oefent elke dag. Weet dat het een harde wereld is, maar kan zich niets anders voorstellen." }
   ],
   mens: [
-    { naam: "Fatima, 18", studie: "hbo Pabo", tekst: "Gaf bijles aan kinderen uit de buurt en vond het mooiste als het kwartje viel. Geduldig en goed in uitleggen." },
-    { naam: "Thomas, 19", studie: "wo Rechten", tekst: "Kan eindeloos discussiëren en leest graag. Wil weten hoe regels werken en wat eerlijk is." }
+    { naam: "Fatima, 18", studie: "hbo Pabo", opl: "Opleiding tot leraar Basisonderwijs", tekst: "Gaf bijles aan kinderen uit de buurt en vond het mooiste als het kwartje viel. Geduldig en goed in uitleggen." },
+    { naam: "Thomas, 19", studie: "wo Rechten", opl: "Rechtsgeleerdheid", tekst: "Kan eindeloos discussiëren en leest graag. Wil weten hoe regels werken en wat eerlijk is." }
   ],
   bedrijf: [
-    { naam: "Jesse, 18", studie: "hbo Bedrijfskunde", tekst: "Had een bijbaan in de supermarkt en dacht steeds na over hoe het slimmer kon. Neemt graag de leiding in een groep." },
-    { naam: "Mila, 19", studie: "hbo Hotelmanagement", tekst: "Werkte in een strandtent en vindt het heerlijk als gasten een goede avond hebben. Organiseert graag en is flexibel." }
+    { naam: "Jesse, 18", studie: "hbo Bedrijfskunde", opl: "Bedrijfskunde", tekst: "Had een bijbaan in de supermarkt en dacht steeds na over hoe het slimmer kon. Neemt graag de leiding in een groep." },
+    { naam: "Mila, 19", studie: "hbo Hotelmanagement", opl: "Hotel Management", tekst: "Werkte in een strandtent en vindt het heerlijk als gasten een goede avond hebben. Organiseert graag en is flexibel." }
   ]
 };
 
 // Dezelfde richtingen, maar dan studenten op het mbo
 const PERSONAS_MBO = {
   tech: [
-    { naam: "Ayoub, 18", studie: "mbo 4 Software developer", tekst: "Bouwde een eigen bot voor zijn gameserver. Leert het best door te doen, in projecten voor echte klanten." },
-    { naam: "Kevin, 17", studie: "mbo 3 Eerste monteur elektrotechniek", tekst: "Sleutelde thuis al aan brommers. Werkt graag met zijn handen en koos bbl, zodat hij meteen verdient." }
+    { naam: "Ayoub, 18", studie: "mbo 4 Software developer", opl: "Software developer", tekst: "Bouwde een eigen bot voor zijn gameserver. Leert het best door te doen, in projecten voor echte klanten." },
+    { naam: "Kevin, 17", studie: "mbo 3 Eerste monteur elektrotechniek", opl: "Eerste monteur elektrotechniek", tekst: "Sleutelde thuis al aan brommers. Werkt graag met zijn handen en koos bbl, zodat hij meteen verdient." }
   ],
   zorg: [
-    { naam: "Sanne, 17", studie: "mbo 4 Verpleegkunde", tekst: "Liep stage in een verpleeghuis en merkte dat ze goed kan luisteren. Wil snel aan het werk en later misschien door naar het hbo." },
-    { naam: "Dewi, 18", studie: "mbo 3 Verzorgende IG", tekst: "Werkte als zorghulp en vindt het fijn om mensen te helpen met wat ze zelf niet meer kunnen." }
+    { naam: "Sanne, 17", studie: "mbo 4 Mbo-verpleegkundige", opl: "Mbo-Verpleegkundige", tekst: "Liep stage in een verpleeghuis en merkte dat ze goed kan luisteren. Wil snel aan het werk en later misschien door naar het hbo." },
+    { naam: "Dewi, 18", studie: "mbo 3 Verzorgende IG", opl: "Verzorgende IG", tekst: "Werkte als zorghulp en vindt het fijn om mensen te helpen met wat ze zelf niet meer kunnen." }
   ],
   weten: [
-    { naam: "Joris, 17", studie: "mbo 4 Laborant", tekst: "Vond de proefjes bij nask het leukst. Werkt graag precies en vindt het fijn als een meting klopt." },
-    { naam: "Bas, 17", studie: "mbo 3 Dierverzorging", tekst: "Heeft thuis kippen en konijnen en loopt stage op een kinderboerderij. Is liever buiten dan in een lokaal." }
+    { naam: "Joris, 17", studie: "mbo 3 Allround laborant", opl: "Allround laborant", tekst: "Vond de proefjes bij nask het leukst. Werkt graag precies en vindt het fijn als een meting klopt." },
+    { naam: "Bas, 17", studie: "mbo 3 Vakbekwaam medewerker dierverzorging", opl: "Vakbekwaam medewerker dierverzorging", tekst: "Heeft thuis kippen en konijnen en loopt stage op een kinderboerderij. Is liever buiten dan in een lokaal." }
   ],
   creatief: [
-    { naam: "Lotte, 17", studie: "mbo 4 Mediavormgever", tekst: "Maakt posters en filmpjes voor haar voetbalclub en heeft een map vol eigen werk. Leert het liefst door te maken." },
-    { naam: "Noa, 18", studie: "mbo 4 Podium- en evenemententechniek", tekst: "Regelde het licht bij de schoolmusical en vond dat het leukste wat er is. Werkt graag achter de schermen." }
+    { naam: "Lotte, 17", studie: "mbo 4 Mediavormgever", opl: "Mediavormgever", tekst: "Maakt posters en filmpjes voor haar voetbalclub en heeft een map vol eigen werk. Leert het liefst door te maken." },
+    { naam: "Noa, 18", studie: "mbo 4 Allround podium- en evenemententechnicus", opl: "Allround podium- en evenemententechnicus", tekst: "Regelde het licht bij de schoolmusical en vond dat het leukste wat er is. Werkt graag achter de schermen." }
   ],
   mens: [
-    { naam: "Amira, 17", studie: "mbo 4 Pedagogisch medewerker", tekst: "Werkt naast school op de bso en past vaak op haar neefjes. Rustig, geduldig en goed in grenzen stellen." },
-    { naam: "Rick, 18", studie: "mbo 4 Persoonlijk begeleider", tekst: "Is vrijwilliger bij een sportclub voor kinderen met een beperking. Houdt van structuur en van mensen verder helpen." }
+    { naam: "Amira, 17", studie: "mbo 4 Pedagogisch medewerker kinderopvang", opl: "Pedagogisch medewerker kinderopvang", tekst: "Werkt naast school op de bso en past vaak op haar neefjes. Rustig, geduldig en goed in grenzen stellen." },
+    { naam: "Rick, 18", studie: "mbo 4 Persoonlijk begeleider gehandicaptenzorg", opl: "Persoonlijk begeleider gehandicaptenzorg", tekst: "Is vrijwilliger bij een sportclub voor kinderen met een beperking. Houdt van structuur en van mensen verder helpen." }
   ],
   bedrijf: [
-    { naam: "Niels, 17", studie: "mbo 4 Commercieel medewerker", tekst: "Werkt in de bouwmarkt en verkoopt graag. Houdt van contact met klanten en wil later een eigen zaak." },
-    { naam: "Esra, 18", studie: "mbo 4 Zelfstandig werkend kok", tekst: "Kookt thuis voor de hele familie en werkt in een restaurant. Kan goed tegen drukte." }
+    { naam: "Niels, 17", studie: "mbo 3 Commercieel medewerker", opl: "Commercieel medewerker", tekst: "Werkt in de bouwmarkt en verkoopt graag. Houdt van contact met klanten en wil later een eigen zaak." },
+    { naam: "Esra, 18", studie: "mbo 3 Zelfstandig werkend kok", opl: "Zelfstandig werkend kok", tekst: "Kookt thuis voor de hele familie en werkt in een restaurant. Kan goed tegen drukte." }
   ]
 };
 
@@ -562,7 +562,7 @@ const GESPREK = [
     ["Waar ben je de laatste tijd mee bezig dat je echt leuk vindt?", "Waar raak je de tijd bij kwijt?", "Wat vinden je vrienden van hun studiekeuze?"],
     ["“Je moet nu toch eens weten wat je wilt.”", "“Toen ik zo oud was als jij …”"]],
   ["2. Doorvragen zonder te sturen", "Je hoeft geen antwoord te hebben. Vraag door op wat je kind zegt, ook als het vaag is.",
-    ["Wat spreekt je daar precies in aan?", "Hoe zie je een gewone werkdag voor je?", "Wat zou je juist níét willen doen?"],
+    ["Wat spreekt je daar precies in aan?", "Hoe zie je een gewone werkdag voor je?", "Welke vakken en welke stage lijken je het leukst?", "Wat zou je juist níét willen doen?"],
     ["“Daar kun je toch niks mee verdienen.”", "“Dat is niks voor jou.”"]],
   ["3. Samen uitzoeken", "Maak het concreet. Vul allebei de Padvinder in en vergelijk de uitslagen: de verschillen zijn het interessantste gesprek.",
     ["Welke twee of drie opleidingen zullen we beter bekijken?", "Naar welke open dag gaan we samen?", "Kennen we iemand die dit werk doet en die je iets kunt vragen?"],
@@ -572,10 +572,22 @@ const GESPREK = [
     ["“Ik weet wat het beste voor je is.”"]]
 ];
 const GESPREK_LASTIG = [
-  ["Als je kind het echt niet weet", "Dat is heel normaal, ook op 17. Kies dan voor iets breds, ga naar meeloopdagen, praat met de decaan of overweeg een tussenjaar met een duidelijk plan. Een verkeerde keuze is niet erg: overstappen kan."],
-  ["Als jullie het oneens zijn", "Vraag eerst waaróm je kind iets wil, en zoek het daarna samen uit: bekijk de opleiding, ga naar een open dag, zoek iemand die het werk doet. Jouw zorg mag je noemen, maar het blijft de keuze van je kind."],
-  ["Als het over geld gaat", "Studeren kost geld: collegegeld, boeken en misschien een kamer. Via DUO, de dienst die studiefinanciering regelt, krijgt je kind een basisbeurs en/of kan het lenen. Kijk samen op duo.nl wat dat voor jullie betekent."],
-  ["Als jullie er samen niet uitkomen", "Maak een afspraak om samen met de decaan te praten. Een derde aan tafel helpt soms: om het gesprek open te houden als je kind vastloopt, en ook als jullie meningen verschillen. De decaan kent de routes, kijkt zonder eigen belang mee en het kost niets."]
+  ["Als je kind het echt niet weet", "Dat is heel normaal, ook op 17. Begin bij de decaan: die zet samen met je kind de mogelijkheden op een rij. Zoek daarna uit wat je kind in elk geval níét wil. Dan vallen veel opties af en wordt kiezen overzichtelijker. Een brede opleiding lijkt veilig, maar kan ook demotiveren als alles algemeen blijft. Een verkeerde keuze na goed uitzoeken is niet erg: overstappen kan. Lastiger is niet kiezen of je niet voorbereiden. Kiezen is een proces, en dat begint met een eerste stap."],
+  ["Als jullie het oneens zijn", "Vaak botsen niet jullie meningen, maar jullie manieren van kiezen. Misschien kiest je kind op gevoel of in één keer, terwijl jij liever eerst alles op een rij zet. Geen van beide is fout. Vraag eerst waaróm je kind iets wil, en vertel hoe jij zelf kiest. Zoek het daarna samen uit: bekijk de opleiding, ga naar een open dag, zoek iemand die het werk doet. Jouw zorg mag je noemen, maar het blijft de keuze van je kind."],
+  ["Als het over geld gaat", "Studeren kost geld: collegegeld, boeken en misschien een kamer. Via DUO, de dienst die studiefinanciering regelt, krijgt je kind een basisbeurs en/of kan het lenen. Wat studeren in totaal per maand kost, met kamer, eten, reizen en verzekering, zie je bij het Nibud en op watkoststuderen.nl. Kijk er samen naar, dan weten jullie allebei waar je aan toe bent.",
+    [["duo.nl", "https://duo.nl"], ["Nibud: studeren", "https://www.nibud.nl/onderwerpen/kinderen-en-jongeren/studeren/"], ["watkoststuderen.nl", "https://watkoststuderen.nl"]]],
+  ["Als jullie er samen niet uitkomen", "Maak een afspraak om samen met de decaan te praten. Een derde aan tafel helpt soms: om het gesprek open te houden als je kind vastloopt, en ook als jullie meningen verschillen. De decaan stelt vaak net andere vragen en ziet sneller verbanden met opleidingen waar jullie zelf nog niet aan dachten. De decaan kent de routes, kijkt zonder eigen belang mee en het kost niets."]
+];
+
+// Hoe kies je? De zeven keuzestijlen uit de krant "Kiezen is een kunst" van CPS, in eigen woorden: [stijl, zo kies je, tip]
+const KEUZESTIJLEN = [
+  ["Logisch-rationeel", "Zet alles op een rij en weegt voor- en nadelen af.", "Vraag ook: wat voel je erbij? Een lijstje kan kloppen en toch niet passen."],
+  ["Emotioneel", "Kiest wat op dit moment goed voelt.", "Help het gevoel te toetsen: klopt het ook op een meeloopdag en in het programma?"],
+  ["Uitstellend", "Schuift de keuze voor zich uit, vaak uit angst om verkeerd te kiezen.", "Maak het klein: kies samen één open dag en zet de datum in de agenda."],
+  ["Eigenzinnig", "Wil het op een eigen manier, wat anderen er ook van vinden.", "Ga er niet tegenin, maar vraag naar de argumenten. Wie zich gehoord voelt, luistert zelf ook beter."],
+  ["Impulsief", "Kiest snel, vaak het eerste wat goed lijkt.", "Vraag om er een nacht over te slapen en nog één andere opleiding te bekijken."],
+  ["Intuïtief", "Weet het ‘gewoon’, zonder goed te kunnen zeggen waarom.", "Vraag door op dat gevoel en kijk samen of het programma klopt met het beeld."],
+  ["Meegaand", "Kiest wat vrienden of ouders willen, of laat anderen beslissen.", "Houd je eigen mening even voor je en vraag wat je kind zélf wil."]
 ];
 
 // Open dag voorbereiden: [titel, punten]
@@ -590,11 +602,11 @@ const OPENDAG_TIPS = [
 
 // Toelating: de mogelijkheden
 const TOELATING = [
-  ["Gewoon toegelaten", "Bij de meeste opleidingen: heb je de juiste vooropleiding en meld je je vóór 1 mei aan, dan mag je beginnen."],
   ["Loting of selectie (numerus fixus)", "Beperkt aantal plekken. Aanmelden vóór 15 januari; daarna volgt een selectie (opdrachten, toets, gesprek) of een loting."],
   ["Portfolio of toelatingsopdracht", "Vooral bij kunst en ontwerp. Je laat werk zien of maakt een opdracht. Begin ruim op tijd met verzamelen."],
   ["Auditie", "Bij muziek, dans en theater. Je speelt, danst of acteert voor een commissie."],
-  ["Aanvullende eisen of een toets", "Mis je een vak? Soms kun je dat inhalen met een cursus of toets (deficiëntie wegwerken). Ben je 21 of ouder zonder het juiste diploma, dan is er vaak een toelatingstoets (21+-toets)."]
+  ["Aanvullende eisen of een toets", "Mis je een vak? Soms kun je dat inhalen met een cursus of toets (deficiëntie wegwerken). Ben je 21 of ouder zonder het juiste diploma, dan is er vaak een toelatingstoets (21+-toets)."],
+  ["Gewoon toegelaten", "Bij de meeste opleidingen: heb je de juiste vooropleiding en meld je je op tijd aan, dan mag je beginnen. Voor het mbo is dat vóór 1 april, voor hbo en wo vóór 1 mei."]
 ];
 
 // Wie betaalt wat?
@@ -622,8 +634,10 @@ const KAMER_CHECKLIST = [
 const OPTIES = [
   ["Studeren in het buitenland", "Kan in België, Duitsland, het Verenigd Koninkrijk of verder. Aanmeldingsdata en toelatingseisen verschillen per land, vaak al in de winter. Studiefinanciering kun je onder voorwaarden meenemen; check dat bij DUO. Begin minstens een jaar van tevoren."],
   ["Een tussenjaar", "Werken, vrijwilligerswerk, reizen of een cursus. Kan heel goed, maar maak een plan: wat wil je doen, en wanneer meld je je aan? De gewone deadlines (15 januari en 1 mei) gelden dan in het jaar dat je wilt beginnen."],
-  ["Werken bij Defensie", "Bij de landmacht, marine, luchtmacht of marechaussee leer je het vak in dienst: je krijgt salaris tijdens je opleiding. Er zijn functies voor vmbo, mbo, havo en vwo, en een Dienjaar om een jaar te proberen. Officier word je via de KMA of het KIM, een bachelor. Je solliciteert via werkenbijdefensie.nl, niet via Studielink. Reken op een selectie van een paar maanden: sporttest, medische keuring, psychologisch onderzoek en een veiligheidsonderzoek."],
-  ["Werken bij de politie", "Je wordt agent via de Politieacademie: op mbo-niveau 4, of met een hbo-bachelor politiekunde. Je bent dan al in dienst en krijgt salaris tijdens je opleiding. Je solliciteert via werkenbijdepolitie.nl, niet via Studielink of de mbo-school. De selectie duurt een paar maanden: sporttest, medische keuring, psychologisch onderzoek en een onderzoek naar je achtergrond. Je hebt de Nederlandse nationaliteit nodig en een rijbewijs helpt."],
+  ["Werken bij Defensie", "Bij de landmacht, marine, luchtmacht of marechaussee leer je het vak in dienst: je krijgt salaris tijdens je opleiding. Er zijn functies voor vmbo, mbo, havo en vwo, en een Dienjaar om een jaar te proberen. Officier word je via de KMA of het KIM, een bachelor. Je solliciteert via werkenbijdefensie.nl, per functie en startmoment. Reken op een selectie van een paar maanden: sporttest, medische keuring, psychologisch onderzoek en een veiligheidsonderzoek. Kom je van het vmbo, dan kan het ook via VEVA (Veiligheid & Vakmanschap): een gewone mbo-opleiding, bijvoorbeeld in zorg, techniek, ICT, logistiek of beveiliging, met militaire vakken, veel sport en elke maand stage bij Defensie. Daarvoor meld je je aan bij een ROC, net als bij andere mbo-opleidingen. Je hebt een vmbo-diploma, een sportmedische keuring en een VOG nodig.",
+    [["werkenbijdefensie.nl", "https://werkenbijdefensie.nl"], ["veva.nl", "https://veva.nl"]]],
+  ["Werken bij de politie", "Je wordt agent via de Politieacademie: op mbo-niveau 4, of met een hbo-bachelor politiekunde. Je bent dan al in dienst en krijgt salaris tijdens je opleiding. Je schrijft je in via kombijde.politie.nl, per politieregio en startdatum. Let op: dat kan al ruim een jaar voor de start, en sommige regio's sluiten de inschrijving al in het najaar. De selectie duurt een paar maanden: sporttest, medische keuring, psychologisch onderzoek en een onderzoek naar je achtergrond. Je hebt de Nederlandse nationaliteit nodig en een rijbewijs helpt.",
+    [["kombijde.politie.nl", "https://kombijde.politie.nl"]]],
   ["Eerst iets anders, later switchen", "Een verkeerde keuze is niet erg. Je kunt na het eerste jaar overstappen, of na een associate degree of mbo doorstromen."]
 ];
 
