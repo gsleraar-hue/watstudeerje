@@ -59,6 +59,13 @@ def foto(fid, terug, klein=False):
     return f'<img src="{terug}img/groep/{"klein/" if klein else ""}{fid}.jpg" alt="{html.escape(alt)}" style="object-position:{pos}" loading="lazy">'
 
 
+def og_foto(fid):
+    """Deelafbeelding: de groepsfoto (1400x788), anders de standaard van de site."""
+    if fid not in FOTO:
+        return None
+    return (f"{BASE}img/groep/{fid}.jpg", 1400, 788, FOTO[fid][0])
+
+
 CSS_EXTRA = """/* Op de achtergrond: gestippelde padvinderlijntjes */
 body{background-image:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='1200' height='1200' fill='none' stroke='%23888' stroke-width='2' stroke-linecap='round' stroke-dasharray='0 9'><g stroke-opacity='.28'><path d='M150 0C260 220 40 420 180 600S120 1000 150 1200'/><path d='M520 0C420 180 700 360 560 620S380 980 520 1200'/><path d='M880 0C1000 260 760 480 900 700S1040 1020 880 1200'/><path d='M180 600C320 560 420 680 560 620M560 620C700 640 780 760 900 700'/><path d='M0 300C300 260 700 380 1200 300'/><path d='M0 950C400 1010 800 880 1200 950'/></g><g fill='%23888' fill-opacity='.3' stroke='none'><circle cx='180' cy='600' r='3.5'/><circle cx='560' cy='620' r='3.5'/><circle cx='900' cy='700' r='3.5'/></g></svg>");background-size:1200px 1200px;background-repeat:repeat}
 .foto{margin:14px 0 4px}
@@ -109,7 +116,7 @@ def main():
     opls = d["opleidingen"]
     SCH = d["scholen"]
     css = bb.CSS + CSS_EXTRA
-    pagina = lambda *a: bb.pagina(*a).replace(f"<style>{bb.CSS}</style>", f"<style>{css}</style>")
+    pagina = lambda *a, **k: bb.pagina(*a, **k).replace(f"<style>{bb.CSS}</style>", f"<style>{css}</style>")
 
     # unieke adressen per opleiding
     gezien, slugs = {}, {}
@@ -206,7 +213,7 @@ def main():
         ]}
         titel = f"{o['n']}: wat is het en wat kun je ermee? | {NAAM}"
         os.makedirs(os.path.join(SITE, pad), exist_ok=True)
-        open(os.path.join(SITE, pad, "index.html"), "w", encoding="utf-8").write(pagina(titel, beschrijving, pad, inhoud, ld, "../../"))
+        open(os.path.join(SITE, pad, "index.html"), "w", encoding="utf-8").write(pagina(titel, beschrijving, pad, inhoud, ld, "../../", beeld=og_foto(f["id"])))
         urls.append(BASE + pad)
 
     # schoolpagina's: alle opleidingen van één school, per niveau en groep, en waar de school zit
@@ -226,7 +233,7 @@ def main():
         pad = f"scholen/{sc['s']}/"
         items = sorted(x["opl"].values(), key=lambda y: y[0]["n"].lower())
         niveaus = [nv for nv in ["mbo", "hbo", "ad", "wo"] if any(nv in lv for _, lv in items)]
-        plaatsen = sorted({pl for pl, _ in x["plek"]}, key=lambda pl: -sum(len(v) for (p, _), v in x["plek"].items() if p == pl))
+        plaatsen = sorted({pl for pl, _ in x["plek"]}, key=lambda pl: (-sum(len(v) for (p, _), v in x["plek"].items() if p == pl), pl))
         soort = {
             "roc": "een roc (regionaal opleidingencentrum): een mbo-school met opleidingen in veel richtingen",
             "aoc": "een groene mbo-school (aoc)",
@@ -296,7 +303,7 @@ def main():
               + blok)
     ld = {"@context": "https://schema.org", "@type": "CollectionPage", "name": "Alle scholen en hun opleidingen", "url": BASE + "scholen/", "inLanguage": "nl"}
     open(os.path.join(SITE, "scholen", "index.html"), "w", encoding="utf-8").write(
-        pagina(f"Alle mbo-scholen, hogescholen en universiteiten | {NAAM}", f"{len(gemaakt)} scholen in Nederland met al hun opleidingen, in gewone taal uitgelegd: roc's, vakscholen, hogescholen en universiteiten.", "scholen/", inhoud, ld, "../"))
+        pagina(f"Alle mbo-scholen, hogescholen en universiteiten | {NAAM}", f"{len(gemaakt)} scholen in Nederland met al hun opleidingen, in gewone taal uitgelegd: roc's, vakscholen, hogescholen en universiteiten.", "scholen/", inhoud, ld, "../", soort="website"))
     urls.append(BASE + "scholen/")
 
     # groepspagina's
@@ -315,7 +322,7 @@ def main():
               "hasPart": [{"@type": "Course", "name": x["n"], "url": BASE + f"opleidingen/{slugs[x['n']]}/"} for x in items]}
         os.makedirs(os.path.join(SITE, pad), exist_ok=True)
         open(os.path.join(SITE, pad, "index.html"), "w", encoding="utf-8").write(
-            pagina(f"Opleidingen {f['naam']}: mbo, hbo en wo uitgelegd | {NAAM}", bb.kort(f"Alle {len(items)} opleidingen in {f['naam']} op mbo, hbo en universiteit, in gewone taal uitgelegd. {f['uitlegKaal']}"), pad, inhoud, ld, "../../../"))
+            pagina(f"Opleidingen {f['naam']}: mbo, hbo en wo uitgelegd | {NAAM}", bb.kort(f"Alle {len(items)} opleidingen in {f['naam']} op mbo, hbo en universiteit, in gewone taal uitgelegd. {f['uitlegKaal']}"), pad, inhoud, ld, "../../../", beeld=og_foto(f["id"]), soort="website"))
         urls.append(BASE + pad)
 
     # overzicht
@@ -330,8 +337,17 @@ def main():
               + blok)
     ld = {"@context": "https://schema.org", "@type": "CollectionPage", "name": "Alle opleidingen in gewone taal", "url": BASE + "opleidingen/", "inLanguage": "nl"}
     open(os.path.join(SITE, "opleidingen", "index.html"), "w", encoding="utf-8").write(
-        pagina(f"Alle mbo-, hbo- en wo-opleidingen in gewone taal | {NAAM}", f"{len(opls)} opleidingen in Nederland uitgelegd in gewone taal: wat je er doet, wat je ermee kunt en wat je nodig hebt. Engelse studienamen vertaald.", "opleidingen/", inhoud, ld, "../"))
+        pagina(f"Alle mbo-, hbo- en wo-opleidingen in gewone taal | {NAAM}", f"{len(opls)} opleidingen in Nederland uitgelegd in gewone taal: wat je er doet, wat je ermee kunt en wat je nodig hebt. Engelse studienamen vertaald.", "opleidingen/", inhoud, ld, "../", soort="website"))
     urls.insert(2, BASE + "opleidingen/")
+
+    # 404: GitHub Pages toont deze bij elk onbekend adres. Niet indexeren, links vanaf de root.
+    inhoud = ('<h1>Deze pagina bestaat niet (meer)</h1>'
+              '<p class="lead">Misschien is de opleiding van naam veranderd, of zit er een tikfout in het adres. Zoek hem hieronder op.</p>'
+              '<ul class="rel"><li><a href="/opleidingen/">Alle opleidingen</a></li><li><a href="/scholen/">Alle scholen</a></li><li><a href="/begrippen/">Alle begrippen</a></li></ul>'
+              '<div class="cta"><p><strong>Weet je nog niet wat je wilt?</strong> De Padvinder laat in 5 minuten zien welke richtingen bij je passen.</p><a class="knop" href="/#/test">Start de Padvinder</a></div>')
+    p404 = pagina(f"Pagina niet gevonden | {NAAM}", "Deze pagina bestaat niet (meer).", "", inhoud, {"@context": "https://schema.org", "@type": "WebPage", "name": "Pagina niet gevonden"}, "/", soort="website")
+    p404 = re.sub(r'<link rel="canonical"[^>]*>\n', "", p404).replace("index, follow, max-image-preview:large", "noindex")
+    open(os.path.join(SITE, "404.html"), "w", encoding="utf-8").write(p404)
 
     vandaag = datetime.date.today().isoformat()
     open(os.path.join(SITE, "sitemap.xml"), "w", encoding="utf-8").write(

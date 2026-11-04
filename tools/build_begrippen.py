@@ -71,8 +71,20 @@ footer{border-top:1px solid var(--line);margin-top:40px;font-size:.85rem;color:v
 """
 
 
-def pagina(titel, beschrijving, pad, inhoud, ld, terug):
+# Favicon, app-iconen en kleur van de browserbalk: op elke pagina hetzelfde (tools/build_iconen.py)
+ICONEN = f"""<link rel="icon" href="/favicon.ico" sizes="32x32">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="manifest" href="/site.webmanifest">
+<meta name="theme-color" content="#d62828">"""
+
+# Standaard deelafbeelding; opleidings- en groepspagina's geven hun eigen groepsfoto mee
+OG_BEELD = (BASE + "og-image.jpg", 1200, 630, "Wat studeer je eigenlijk? Studiekeuze in gewone taal, voor leerlingen én ouders")
+
+
+def pagina(titel, beschrijving, pad, inhoud, ld, terug, beeld=None, soort="article"):
     url = BASE + pad
+    src, bw, bh, alt = beeld or OG_BEELD
     return f"""<!doctype html>
 <html lang="nl">
 <head>
@@ -80,13 +92,23 @@ def pagina(titel, beschrijving, pad, inhoud, ld, terug):
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{html.escape(titel)}</title>
 <meta name="description" content="{html.escape(beschrijving)}">
+<meta name="robots" content="index, follow, max-image-preview:large">
 <link rel="canonical" href="{url}">
-<meta property="og:type" content="article">
+{ICONEN}
+<meta property="og:type" content="{soort}">
 <meta property="og:locale" content="nl_NL">
 <meta property="og:site_name" content="{NAAM}">
 <meta property="og:title" content="{html.escape(titel)}">
 <meta property="og:description" content="{html.escape(beschrijving)}">
 <meta property="og:url" content="{url}">
+<meta property="og:image" content="{src}">
+<meta property="og:image:width" content="{bw}">
+<meta property="og:image:height" content="{bh}">
+<meta property="og:image:alt" content="{html.escape(alt)}">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="{html.escape(titel)}">
+<meta name="twitter:description" content="{html.escape(beschrijving)}">
+<meta name="twitter:image" content="{src}">
 <script type="application/ld+json">{json.dumps(ld, ensure_ascii=False)}</script>
 <style>{CSS}</style>
 </head>
@@ -152,7 +174,7 @@ def main():
     ld = {"@context": "https://schema.org", "@type": "DefinedTermSet", "name": "Begrippen rond studiekeuze", "url": set_url, "inLanguage": "nl",
           "hasDefinedTerm": [{"@type": "DefinedTerm", "name": w[1], "url": BASE + f"begrippen/{slug(w[1])}/"} for w in woorden]}
     open(os.path.join(SITE, "begrippen", "index.html"), "w", encoding="utf-8").write(
-        pagina(f"Begrippen rond studiekeuze uitgelegd | {NAAM}", f"LOB, decaan, BSA, propedeuse, numerus fixus en meer: {len(woorden)} studiekeuzebegrippen in gewone taal uitgelegd, voor leerlingen en ouders.", "begrippen/", inhoud, ld, "../"))
+        pagina(f"Begrippen rond studiekeuze uitgelegd | {NAAM}", f"LOB, decaan, BSA, propedeuse, numerus fixus en meer: {len(woorden)} studiekeuzebegrippen in gewone taal uitgelegd, voor leerlingen en ouders.", "begrippen/", inhoud, ld, "../", soort="website"))
 
     print(f"{len(woorden)} begrippen")
     return urls
