@@ -172,7 +172,7 @@
     piloot: ["luchtvaart", "aviation"], vlieger: ["luchtvaart"], stewardess: ["luchtvaartdienstverlener"], steward: ["luchtvaartdienstverlener"],
     politie: ["politie", "veiligheid"], agent: ["politie", "veiligheid"], rechercheur: ["politie", "criminologie"], boa: ["handhaving", "toezichthouder"],
     journalist: ["journalistiek"], verslaggever: ["journalistiek"], programmeur: ["software", "informatica"], developer: ["software"], softwareontwikkelaar: ["software"],
-    architect: ["architectuur", "bouwkunde"], accountant: ["accountancy"], boer: ["landbouw", "veehouderij"], dierverzorger: ["dierverzorging"],
+    architect: ["architectuur", "bouwkunde"], restaurator: ["restauratie"], restaurateur: ["restauratie"], accountant: ["accountancy"], boer: ["landbouw", "veehouderij"], dierverzorger: ["dierverzorging"],
     juf: ["leraar basisonderwijs", "pedagogisch"], meester: ["leraar basisonderwijs", "pedagogisch"], onderwijzer: ["leraar basisonderwijs"],
     gymleraar: ["lichamelijke opvoeding", "sport"], gymdocent: ["lichamelijke opvoeding"], kinderopvang: ["pedagogisch"],
     elektromonteur: ["monteur elektrotechn"], elektricien: ["monteur elektrotechn"], loodgieter: ["monteur werktuigkundige installaties", "installatietechniek"],
@@ -195,20 +195,24 @@
   }
   // 100 = naam is precies de vraag, 80/60 = alle woorden in de naam, 40 = in de Engelse naam, 5 = alleen in de groep
   // Staat x in de tekst, of een woord met dezelfde stam (verpleegkunde ~ verpleegkundige)?
-  function bevat(tekst, x) {
+  // Streng (bij beroepen): een kort woord moet aan het begin van een woord staan, anders vindt "spa" verspaner
+  // en "taal" metaal
+  function bevat(tekst, x, streng) {
+    // (en een woord van drie letters moet helemaal los staan: "spa" is geen Spaans)
+    if (streng && x.length <= 5) return new RegExp("(^|[^a-z0-9])" + x.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + (x.length <= 3 ? "($|[^a-z0-9])" : "")).test(tekst);
     if (tekst.includes(x)) return true;
     if (x.length < 7) return false;
     const stam = x.slice(0, -1);
     return tekst.split(/[^a-z0-9]+/).some((y) => y.startsWith(stam));
   }
-  function zoekScore(o, f, varianten) {
+  function zoekScore(o, f, varianten, streng) {
     const n = norm(o.n), ne = n + " " + norm(o.e), alles = ne + " " + norm(f.naam + " " + f.uitleg);
     let best = 0;
     varianten.forEach(({ w, straf }) => {
       let sc = 0;
       if (n === w.join(" ")) sc = 100;
-      else if (w.every((x) => bevat(n, x))) sc = n.startsWith(w[0]) || n.includes(" " + w[0]) ? 80 : 60;
-      else if (w.every((x) => bevat(ne, x))) sc = 40;
+      else if (w.every((x) => bevat(n, x, streng))) sc = n.startsWith(w[0]) || n.includes(" " + w[0]) ? 80 : 60;
+      else if (w.every((x) => bevat(ne, x, streng))) sc = 40;
       else if (w.every((x) => alles.includes(x))) sc = 5;
       if (sc) best = Math.max(best, sc - straf);
     });
@@ -218,7 +222,7 @@
   /* ---------- Beroepen: doorklikken naar opleidingen die erbij passen ---------- */
   // Woorden die in een beroep staan maar niets zeggen over de opleiding
   const BEROEP_STOP = new Set(["medewerker", "werken", "bij", "een", "of", "in", "op", "de", "het", "van", "voor", "met", "later", "en", "eigen", "bedrijf", "via", "naar", "doorstromen", "zelfstandig", "werk", "iets", "die", "als"]);
-  const BEROEP_VAAG = new Set(["overheid", "specialist", "technisch", "creatief", "hbo", "industrie", "universiteit", "art", "maker", "account", "engineer", "licht", "data", "medisch", "tweede", "intelligentie", "adviseur", "bedrijven", "bedrijf", "zorg", "talen", "sociale", "manager", "medewerker"]);
+  const BEROEP_VAAG = new Set(["overheid", "specialist", "technisch", "creatief", "hbo", "industrie", "universiteit", "art", "maker", "account", "engineer", "licht", "data", "medisch", "tweede", "intelligentie", "adviseur", "artist", "bedrijven", "bedrijf", "zorg", "talen", "sociale", "manager", "medewerker"]);
   const beroepCache = new Map();
   let famVan = null;
   // Staat de zoekterm in de naam van minstens één opleiding?
@@ -228,7 +232,7 @@
     if (!v.length) return [];
     famVan = famVan || new Map(FAMILIES.map((f) => [f.id, f]));
     const lv = niv ? niv.split(" ") : null;
-    return OPLEIDINGEN.filter((o) => famVan.get(o.f) && (!lv || o.l.some((n) => lv.includes(n))) && zoekScore(o, famVan.get(o.f), v) >= 60);
+    return OPLEIDINGEN.filter((o) => famVan.get(o.f) && (!lv || o.l.some((n) => lv.includes(n))) && zoekScore(o, famVan.get(o.f), v, true) >= 60);
   }
   const heeftTreffer = (q, niv) => beroepTreffers(q, niv).length > 0;
   // "mbo / hbo" of "hbo + vervolg" naar "mbo hbo" en "hbo"
@@ -247,7 +251,8 @@
     const kand = [];
     String(b).replace(/\([^)]*\)/g, " ").replace(/:.*$/, "").split(/,| of | en |\//).map((d) => d.trim()).filter(Boolean).forEach((d) => {
       const ws = norm(d).split(/\s+/).filter((w) => w.length > 2 && !BEROEP_STOP.has(w) && !w.endsWith("-"));
-      kand.push(ws.join(" "), ws.map(stam).join(" "));
+      // Alleen vage woorden ("Doorstromen naar hbo") is geen zoekterm: "hbo" vindt HBO - Rechten
+      if (ws.some((w) => !BEROEP_VAAG.has(w))) kand.push(ws.join(" "), ws.map(stam).join(" "));
       // Losse woorden alleen als ze iets zeggen: "overheid" of "specialist" vindt van alles
       ws.filter((w) => !BEROEP_VAAG.has(w)).sort((x, y) => y.length - x.length).forEach((w) => kand.push(w, stam(w)));
     });
@@ -263,11 +268,15 @@
   }
   function renderList() {
     const q = state.zoek.trim().toLowerCase();
+    const past = (s, tekst) => zoekVarianten(q).some(({ w }) => w.every((x) => norm(tekst).includes(x)));
+    // Alleen via een beroep ("Systeemarchitect" bij Informatica) telt niet als er opleidingen zijn
+    // waarvan de naam past: anders staat bij "architect" Informatica bovenaan
+    const viaBeroep = q && heeftTreffer(q);
     const res = STUDIES.filter(
       (s) =>
         nivPast(s.niveau) &&
         (!state.gebied || s.gebied === state.gebied) &&
-        (!q || zoekVarianten(q).some(({ w }) => w.every((x) => norm(haystack(s)).includes(x))))
+        (!q || past(s, viaBeroep ? haystack(s).replace(s.kanJe.join(" ").toLowerCase(), "") : haystack(s)))
     );
     const list = $("#lijst");
     list.innerHTML = "";
@@ -479,30 +488,30 @@
     const via = {}; // school -> opleiding die die school nu geeft
     voor.forEach((x) => x.i.forEach((i) => { if (!o.i.includes(i) && !via[i]) via[i] = x.n; }));
     const alleI = o.i.concat(Object.keys(via));
-    const particulier = alleI.filter((i) => PARTICULIER.has(i));
     const extra = extraEis(o, f.id);
     const per = dichtsteBij(o.n);
     voor.forEach((x) => Object.entries(dichtsteBij(x.n)).forEach(([i, p]) => { if (via[i] === x.n) per[i] = p; }));
-    const gesorteerd = (thuis ? alleI.slice().sort((a, b) => ((per[a] || {}).d ?? 1e9) - ((per[b] || {}).d ?? 1e9)) : o.i.slice())
-      .sort((a, b) => PARTICULIER.has(a) - PARTICULIER.has(b)); // particuliere scholen achteraan
+    const scholen = scholenLijst(o, alleI, via, per);
+    const gesorteerd = (thuis ? scholen.slice().sort((a, b) => (a.d ?? 1e9) - (b.d ?? 1e9)) : scholen)
+      .sort((a, b) => a.particulier - b.particulier); // particuliere scholen achteraan
     const insts = gesorteerd.slice(0, 40);
-    const schoolLi = (i) => via[i] ? schoolRegel(i, via[i], per[i]).replace(/<\/li>$/, `<br><span class="od-next">Geeft nu ${esc(via[i])}</span></li>`) : schoolRegel(i, o.n, per[i]);
+    const particulier = scholen.filter((s) => s.particulier).map((s) => s.naam);
     let reis = `<div class="reis">${woonInput("woonDialog")}`;
     if (!thuis) {
       reis += `<p>Vul in waar je woont, dan zie je hoe ver elke school is en hoe lang je ongeveer reist.</p>`;
     } else {
       // Afstand tot de dichtstbijzijnde gewone school uit de lijst; particuliere scholen staan onderaan en tellen apart
-      const metPlek = alleI.filter((i) => per[i]);
-      const gewoon = metPlek.filter((i) => !PARTICULIER.has(i));
-      const afst = (gewoon.length ? gewoon : metPlek).map((i) => per[i].d);
+      const metPlek = scholen.filter((s) => s.d !== null);
+      const gewoon = metPlek.filter((s) => !s.particulier);
+      const afst = (gewoon.length ? gewoon : metPlek).map((s) => s.d);
       const best = afst.length ? Math.min(...afst) : null;
-      const privDichtbij = gewoon.length ? metPlek.filter((i) => PARTICULIER.has(i) && per[i].d < best - 5).sort((a, b) => per[a].d - per[b].d)[0] : null;
+      const privDichtbij = gewoon.length ? metPlek.filter((s) => s.particulier && s.d < best - 5).sort((a, b) => a.d - b.d)[0] : null;
       if (best === null) reis += `<p>Van deze opleiding is geen locatie bekend.</p>`;
       else if (o.is && best > 40) reis += `<p><strong>Dit zijn niet alle ziekenhuizen die opleiden.</strong> Het dichtstbijzijnde hier is ${afstandTekst(best)}, maar de kans is groot dat een ziekenhuis bij jou in de buurt ook opleidt. Kijk op de werkenbij-site van dat ziekenhuis.</p>`;
       else if (best < 25) reis += `<p><strong>Thuis blijven wonen kan prima.</strong> De dichtstbijzijnde school is ${afstandTekst(best)}.</p>`;
       else if (best <= 60) reis += `<p><strong>Reizen kan.</strong> De dichtstbijzijnde school is ${afstandTekst(best)} (enkele reis, indicatie). Veel studenten reizen zo'n afstand dagelijks.</p>`;
       else reis += `<p><strong>Dat is ver weg:</strong> de dichtstbijzijnde school is ${afstandTekst(best)}. Elke dag reizen of op kamers gaan? Dat is een persoonlijke afweging: reistijd, geld, hoe zelfstandig je al bent en wat thuis kan. Bespreek het eerst met je ouders of verzorgers. Kies je voor een kamer, begin dan op tijd met zoeken.</p>`;
-      if (privDichtbij) reis += `<p>Dichterbij zit ${esc(privDichtbij)} (${esc(per[privDichtbij].pl)}, ${afstandTekst(per[privDichtbij].d)}), maar dat is een particuliere school met hoog lesgeld. Die staat onderaan de lijst.</p>`;
+      if (privDichtbij) reis += `<p>Dichterbij zit ${esc(privDichtbij.naam)} (${esc(privDichtbij.pl)}, ${afstandTekst(privDichtbij.d)}), maar dat is een particuliere school met hoog lesgeld. Die staat onderaan de lijst.</p>`;
       if (best !== null && best > 40 && !o.is) {
         const alt = OPLEIDINGEN.filter((x) => x.f === o.f && x.n !== o.n).map((x) => {
           let m = 1e9;
@@ -536,12 +545,12 @@
           `<li>Het helpt als je ${alsJe(X.eigen)}.</li></ul><p class="praat" style="margin-top:8px">Toelatingseisen verschillen per school. Lees ze altijd bij de opleiding zelf.</p>`
         : "") +
       profielCheck(o, f.id) +
-      `<h3>Waar kan het? (${alleI.length} ${Z ? "ziekenhuizen" : alleI.length === 1 ? "school" : "scholen"})</h3>${reis}` +
+      `<h3>Waar kan het? (${scholen.length} ${Z ? "ziekenhuizen" : scholen.length === 1 ? "school" : "scholen"})</h3>${reis}` +
       (voor.length ? `<p>${o.i.length === 1 ? "Eén school biedt" : `${o.i.length} scholen bieden`} deze nieuwe opleiding al aan. De andere scholen hieronder geven nu ${voor.map((x) => esc(x.n)).join(" of ")} en stappen vanaf ${esc(o.nw.jaar)} waarschijnlijk over. Vraag het na bij de school.</p>` : "") +
-      `<ul class="scholen">${insts.map(schoolLi).join("")}</ul>` +
+      `<ul class="scholen">${insts.map(schoolRij).join("")}</ul>` +
       (Z ? `<p>Veel meer ziekenhuizen leiden op. Kijk ook bij het ziekenhuis bij jou in de buurt.</p>` : "") +
       (particulier.length ? `<div class="attentie"><p><strong>Let op: ${particulier.length === 1 ? "particuliere school" : "particuliere scholen"}</strong></p><p>${particulier.map(esc).join(", ")} ${particulier.length === 1 ? "krijgt" : "krijgen"} geen geld van de overheid. Je betaalt daar een veel hoger ${M ? "lesgeld" : "collegegeld"}, vaak vele malen het gewone bedrag. Particuliere opleidingen zijn meestal bedoeld voor volwassenen die naast hun werk leren. Kom je van de middelbare school, kijk dan eerst bij de andere scholen.</p></div>` : "") +
-      (alleI.length > insts.length ? `<p style="color:var(--muted)">en ${alleI.length - insts.length} andere</p>` : "") +
+      (scholen.length > insts.length ? `<p style="color:var(--muted)">en ${scholen.length - insts.length} andere</p>` : "") +
       (Z ? `<h3>Toelatingsexamen, auditie of selectie?</h3><p>Ja: je solliciteert bij een ziekenhuis op een vacature voor "${esc(o.n.toLowerCase())} in opleiding". Er zijn per ziekenhuis maar een paar plekken, dus vaak volgt een gesprek en soms een meeloopdag.</p>` : "") +
       (Z ? "" : `<h3>Toelatingsexamen, auditie of selectie?</h3><p>${SELECTIE[f.id] ? esc(SELECTIE[f.id]) + " Kijk bij de opleiding zelf wat er precies gevraagd wordt." : M ? "Meestal niet. Meld je je vóór 1 april aan en heb je de juiste vooropleiding, dan moet de school je toelaten. Wel heb je eerst een intakegesprek." : "Meestal niet. Heb je de juiste vooropleiding en meld je je op tijd aan, dan mag je in principe beginnen."}</p>`) +
       `<div class="planb-box"><h3>Plan B: wat als je niet wordt aangenomen?</h3><ul>` +
@@ -1402,20 +1411,39 @@
     return e && Array.isArray(e.dagen) ? e.dagen.filter((d) => d.datum && (d.eind || d.datum) >= vandaag).sort((a, b) => a.datum.localeCompare(b.datum)) : [];
   }
   const opleidingUrl = (opleiding, inst) => (opleiding ? veiligeUrl((typeof MBO_URL === "object" && MBO_URL[`${opleiding}|${inst}`]) || (typeof HO_URL === "object" && HO_URL[`${opleiding}|${inst}`])) : "");
-  function schoolRegel(inst, opleiding, afst) {
-    const k = komend(inst)[0];
-    const odE = OD[inst] || (typeof OD_MERK === "object" && OD[OD_MERK[inst]]);
-    const site = veiligeUrl(odE && odE.site);
-    // Alleen echte pagina's van de school zelf: de opleidingspagina als die bekend is, anders de site van de school
-    const direct = opleidingUrl(opleiding, inst);
-    const schoolSite = !direct && site ? new URL(site).origin : "";
-    let r = `<strong>${esc(inst)}</strong>${PARTICULIER.has(inst) ? ` <span class="badge particulier">particulier · hoog lesgeld</span>` : ""}`;
-    if (afst) r += ` <span class="afst">${afst.adres ? esc(afst.adres) + ", " : ""}${esc(afst.pl)} · ${afstandTekst(afst.d)}</span>`;
-    if (direct) r += ` <a href="${esc(direct)}" target="_blank" rel="noopener">opleidingspagina ↗</a>`;
-    else if (opleiding && schoolSite) r += ` <a href="${esc(schoolSite)}" target="_blank" rel="noopener">website van de school ↗</a>`;
-    if (k) r += `<br><span class="od-next">Eerstvolgende ${esc(k.soort || "open dag")}: ${fmt(k.datum, { weekday: "short", day: "numeric", month: "long" })}${k.plaats ? ", " + esc(k.plaats) : ""}</span>`;
-    if (site) r += ` · <a href="${esc(site)}" target="_blank" rel="noopener">open dagen ↗</a>`;
-    return `<li>${r}</li>`;
+  // Eén regel per school: mbo-vestigingen ("Creatieve Industrie & Vakschool Wageningen") vallen onder hun
+  // school (Rijn IJssel), zoals op de schoolpagina's. Per school: plaats, afstand en één link naar de opleiding.
+  const schoolNaam = (i) => { const s = typeof SCHOOL_VAN === "object" ? SCHOOL_VAN[i] : undefined; return s !== undefined ? SCHOLEN[s].n : i; };
+  function scholenLijst(o, insts, via, per) {
+    const plekVan = {};
+    [o.n, ...new Set(Object.values(via))].forEach((n) => plekkenVan(n).forEach(([i, pl]) => { (plekVan[i] = plekVan[i] || []).includes(pl) || plekVan[i].push(pl); }));
+    const groep = new Map();
+    insts.forEach((i) => {
+      const pl = (plekVan[i] || [])[0];
+      const s = typeof SCHOOL_VAN === "object" ? (SCHOOL_PLEK[i + "|" + pl] ?? SCHOOL_VAN[i]) : undefined;
+      const naam = s !== undefined ? SCHOLEN[s].n : i;
+      if (!groep.has(naam)) groep.set(naam, { naam, insts: [], plaatsen: [], d: null, pl: "", particulier: false, url: "", site: "", via: null });
+      const g = groep.get(naam);
+      g.insts.push(i);
+      (plekVan[i] || []).forEach((p) => g.plaatsen.includes(p) || g.plaatsen.push(p));
+      if (per[i] && (g.d === null || per[i].d < g.d)) { g.d = per[i].d; g.pl = per[i].pl; }
+      if (PARTICULIER.has(i) || (s !== undefined && SCHOLEN[s].t === "particulier")) g.particulier = true;
+      // Alleen echte pagina's van de school zelf: de opleidingspagina als die bekend is, anders de site van de school
+      if (!g.url) g.url = opleidingUrl(via[i] || o.n, i);
+      const odE = OD[naam] || OD[i] || (typeof OD_MERK === "object" && OD[OD_MERK[i]]);
+      if (!g.site && odE && veiligeUrl(odE.site)) g.site = new URL(odE.site).origin;
+      if (via[i]) g.via = g.via || via[i]; else g.eigen = true;
+    });
+    return [...groep.values()];
+  }
+  function schoolRij(g) {
+    const plek = (p) => esc(String(p).replace(/^'S-/, "'s-")); // DUO schrijft 'S-Hertogenbosch
+    const waar = thuis && g.d !== null ? `${plek(g.pl)} · ${afstandTekst(g.d)}` : g.plaatsen.slice(0, 4).map(plek).join(", ") + (g.plaatsen.length > 4 ? ", …" : "");
+    const link = g.url ? `<a class="naar" href="${esc(g.url)}" target="_blank" rel="noopener">Bekijk de opleiding ↗</a>`
+      : g.site ? `<a class="naar" href="${esc(g.site)}" target="_blank" rel="noopener">Website van de school ↗</a>` : "";
+    return `<li><strong>${esc(g.naam)}</strong>${g.particulier ? ` <span class="badge particulier">particulier · hoog lesgeld</span>` : ""}${link}` +
+      (waar ? `<span class="afst">${waar}</span>` : "") +
+      (g.via && !g.eigen ? `<span class="od-next">Geeft nu ${esc(g.via)}</span>` : "") + `</li>`;
   }
   // Ov-route naar de open dag (vanaf je woonplaats als die bekend is)
   function routeLink(r) {
@@ -1541,9 +1569,10 @@
       const scholen = thuis ? o.i.slice().sort((x, y) => ((per[x] || {}).d ?? 1e9) - ((per[y] || {}).d ?? 1e9)).slice(0, 3) : o.i.slice(0, 3);
       scholen.forEach((inst) => {
         const k = komend(inst).find((d) => !/online/i.test(d.soort || "")) || komend(inst)[0];
-        if (!k || gezien.has(inst + k.datum)) return;
-        gezien.add(inst + k.datum);
-        out.push({ inst, opl: o.n, d: per[inst], dag: k, site: OD[inst] && OD[inst].site });
+        const naam = schoolNaam(inst);
+        if (!k || gezien.has(naam + k.datum)) return;
+        gezien.add(naam + k.datum);
+        out.push({ inst: naam, opl: o.n, d: per[inst], dag: k, site: OD[inst] && OD[inst].site });
       });
     });
     return out.sort((x, y) => x.dag.datum.localeCompare(y.dag.datum));
@@ -1680,7 +1709,7 @@
       const p = per[inst];
       const od = komend(inst).find((d) => !/online/i.test(d.soort || "")) || komend(inst)[0];
       const sel = SELECTIE[o.f];
-      return `<tr><td>${vak("")}<strong>${esc(o.n)}</strong></td><td>${esc(inst || "")}${p ? `<br><small>${esc(p.pl)}, ${Math.round(p.d)} km</small>` : ""}</td><td>${od ? fmt(od.datum, { weekday: "short", day: "numeric", month: "short" }) : "zie site school"}</td><td>${sel ? esc(sel) : "Juiste vooropleiding is genoeg"}</td><td><strong>${sel ? "15 jan " + sj : "1 mei " + sj}</strong></td></tr>`;
+      return `<tr><td>${vak("")}<strong>${esc(o.n)}</strong></td><td>${esc(inst ? schoolNaam(inst) : "")}${p ? `<br><small>${esc(p.pl)}, ${Math.round(p.d)} km</small>` : ""}</td><td>${od ? fmt(od.datum, { weekday: "short", day: "numeric", month: "short" }) : "zie site school"}</td><td>${sel ? esc(sel) : "Juiste vooropleiding is genoeg"}</td><td><strong>${sel ? "15 jan " + sj : "1 mei " + sj}</strong></td></tr>`;
     }).join("");
     return `<div class="kk-kop"><div><h1>Mijn route naar september ${sj}</h1><p>Naam: ______________________ &nbsp; Klas: ${esc((KLASSEN.find((k) => k[0] === lees("klas", "")) || ["", "______"])[1])}</p></div><div class="kk-merk">Wat studeer je eigenlijk?</div></div>` +
       `<div class="kk-flow">` +

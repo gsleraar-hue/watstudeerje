@@ -35,6 +35,10 @@ DOMEIN = {
     "Grafisch Lyceum Utrecht": ["www.glu.nl"],
     "Cibap vakschool voor vormgeving": ["www.cibap.nl"],
     "Herman Brood Academie": ["www.hermanbroodacademie.nl"],
+    # Mbo-scholen zonder site in de open dagen (Regio College en Friesland College zijn opgegaan in Talland en Firda)
+    "Regio College": ["www.talland.nl"], "Friesland College": ["www.firda.nl"], "ROC van Flevoland": ["www.rocvanflevoland.nl"],
+    "De Rooi Pannen": ["www.derooipannen.nl"], "ORGB Opleidingen": ["www.orgb.nl"], "Ter AA": ["www.ter-aa.nl"],
+    "Noorderpoort": ["noorderpoort.nl"], "Summa College": ["summa-onderwijs.nl"],
 }
 # Eigen domeinen van onderdelen van scholen: een doorverwijzing daarheen is geen kaping
 SCHOOLDOMEIN = {"academieminerva.nl", "prinsclausconservatorium.nl", "calderacademie.nl", "jhs.nl"}
@@ -351,11 +355,15 @@ def main():
     for k, u in list(duo.items()) + list(mbo_url.items()):
         hosts[k.split("|", 1)[1]][urlparse(u).netloc.lower()] += 1
 
+    # Mbo-vestigingen ("Creatieve Industrie") horen bij een school (Rijn IJssel): gebruik ook het domein van die school
+    scholen, school_van = laad("scholen.js", "SCHOLEN"), laad("scholen.js", "SCHOOL_VAN")
+
     def domeinen(i):
-        uit = list(DOMEIN.get(i, []))
-        e = od.get(i) or od.get(merk.get(i))
-        if e and e.get("site"):
-            uit.append(urlparse(e["site"]).netloc.lower())
+        school = scholen[school_van[i]]["n"] if i in school_van else None
+        uit = list(DOMEIN.get(i, [])) + list(DOMEIN.get(school, []))
+        for e in (od.get(i), od.get(merk.get(i)), od.get(school)):
+            if e and e.get("site"):
+                uit.append(urlparse(e["site"]).netloc.lower())
         uit += [h for h, n in hosts.get(i, {}).items() if n >= 2 or not uit]
         return list(dict.fromkeys(h for h in uit if h))
 
@@ -388,9 +396,12 @@ def main():
             vormen = {"voltijd" if v == "bol" else "duaal" for v in o.get("v", [])}
             namen = [o["n"]]
         kand = []
+        # Mbo-scholen zetten de plaats soms achter de naam: allround-kapper-groningen
+        pl = [tuple(x for x in tokens(p) if x not in STOP) for p in o.get("p", [])] if soort == "mbo" else []
         for h in dom[i]:
             for k in varianten(namen):
-                kand += [c for c in ix[h].get(k, []) if set(niv) != {"ad"} or k not in bachelor or c[1] & {"ad", "associate"}]
+                for kk in [k] + [k + p for p in pl if p]:
+                    kand += [c for c in ix[h].get(kk, []) if set(niv) != {"ad"} or k not in bachelor or c[1] & {"ad", "associate"}]
         u = kies(kand, niv, vormen, o.get("p", []))
         if u:
             (ho if soort == "ho" else extra)[key] = u
