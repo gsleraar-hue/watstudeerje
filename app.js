@@ -1051,9 +1051,19 @@
     // Studies waarbij dit vak als eerste staat komen bovenaan
     $("#nieuwLijst").innerHTML = NIEUW.filter((n) => n[2].includes(v[0]))
       .sort((a, b) => a[2].indexOf(v[0]) - b[2].indexOf(v[0])).slice(0, 6)
-      .map((n) => `<div class="nw"><strong>${vt(n[0])}</strong><span>${vt(n[1])}</span></div>`).join("");
+      .map((n) => `<div class="nw"><strong>${vt(n[0])}</strong><span>${vt(n[1])}</span><div class="mini">${n[3].map((naam) => OPLEIDINGEN.find((o) => o.n === naam)).filter(Boolean).map((o) =>
+        `<button type="button" data-nwopl="${esc(o.n)}">${esc(o.n)} <small>${o.l.map((x) => NIV_LABEL[x]).join(", ")} · ${o.i.length} ${o.i.length === 1 ? "school" : "scholen"}</small></button>`).join("")}</div></div>`).join("");
+    // Praktijkvakken hebben (nog) geen minder bekende studies: dan het kopje ook niet tonen
+    ["#nieuwKop", "#nieuwSub", "#nieuwLijst"].forEach((s) => ($(s).hidden = !$("#nieuwLijst").children.length));
     bewaar("vak", i);
   }
+  // Minder bekende studie: open de opleiding zelf, met beroepen, scholen en open dagen
+  $("#nieuwLijst").addEventListener("click", (e) => {
+    const b = e.target.closest("[data-nwopl]");
+    if (!b) return;
+    const o = OPLEIDINGEN.find((x) => x.n === b.dataset.nwopl);
+    if (o) openOpleiding(o, FAMILIES.find((f) => f.id === o.f));
+  });
   $("#vakkenLijst").addEventListener("click", (e) => { const b = e.target.closest("[data-vak]"); if (b) toonVak(Number(b.dataset.vak)); });
   $("#vakPaneel").addEventListener("click", (e) => {
     const b = e.target.closest("[data-fams]");
@@ -1443,7 +1453,16 @@
       : g.site ? `<a class="naar" href="${esc(g.site)}" target="_blank" rel="noopener">Website van de school ↗</a>` : "";
     return `<li><strong>${esc(g.naam)}</strong>${g.particulier ? ` <span class="badge particulier">particulier · hoog lesgeld</span>` : ""}${link}` +
       (waar ? `<span class="afst">${waar}</span>` : "") +
-      (g.via && !g.eigen ? `<span class="od-next">Geeft nu ${esc(g.via)}</span>` : "") + `</li>`;
+      (g.via && !g.eigen ? `<span class="od-next">Geeft nu ${esc(g.via)}</span>` : "") + odRegel(g) + `</li>`;
+  }
+  // Eerstvolgende open dag van de school, met link naar aanmelden of de open-dagenpagina
+  function odRegel(g) {
+    const d = [g.naam, ...g.insts].map(komend).find((x) => x.length);
+    if (!d) return "";
+    const e = OD[g.naam] || g.insts.map((i) => OD[i] || (typeof OD_MERK === "object" && OD[OD_MERK[i]])).find(Boolean) || {};
+    const url = veiligeUrl(d[0].aanmelden) || veiligeUrl(e.site);
+    const tekst = `${d[0].soort ? d[0].soort[0].toUpperCase() + d[0].soort.slice(1) : "Open dag"}: ${fmt(d[0].datum, { weekday: "long", day: "numeric", month: "long" })}`;
+    return `<span class="od-next">${url ? `<a href="${esc(url)}" target="_blank" rel="noopener">${esc(tekst)} ↗</a>` : esc(tekst)}</span>`;
   }
   // Ov-route naar de open dag (vanaf je woonplaats als die bekend is)
   function routeLink(r) {

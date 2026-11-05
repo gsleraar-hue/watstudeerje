@@ -108,6 +108,8 @@ main section>h2::before{counter-increment:stop;content:"Nr. " counter(stop,decim
 .nieuw{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px}
 .nw{display:flex;flex-direction:column;gap:2px;background:var(--card);padding:16px 18px;border-radius:var(--r)}
 .nw span{color:var(--muted);font-size:.92rem}
+.nw .mini{margin-top:10px}
+.nw .mini button small{color:var(--muted);font-weight:400;font-size:.85rem}
 .source{color:var(--muted);font-size:.85rem;margin-top:16px}
 .m-noten{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;margin-top:18px}
 .m-noten>div{border:1px solid var(--line);border-radius:var(--r);background:var(--card);padding:14px 18px}
